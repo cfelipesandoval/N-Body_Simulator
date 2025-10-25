@@ -11,28 +11,45 @@ using namespace std;
 class CelestialBody
 {
 public:
-  CelestialBody(vec3 p, vec3 c, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size);
-  
-  vec3 getPosition();
-  void addPosition(vec3);
-  vec3 getColor();
-  void setPosition(vec3);
-  void setColor(vec3);
-  void draw(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos);
-
-  static int bodyCount;
+  static vector<CelestialBody*> bodies;
   static int MAX_TRAIL_POINTS;
 
+  CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size);
+
+  void addPosition(vec3);
+  void addVelocity(vec3 vel);
+
+  // // Getters
+  vec3 getPosition();
+  vec3 getVelocity();
+  vec3 getColor();
+  float getMass();
+  float getRadius();
+  int getBodyNum();
+
+  // // Setters
+  void setPosition(vec3);
+  void setVelocity(vec3);
+  void setColor(vec3);
+  void setMass(float);
+  void setRadius(float);
+
+  void RK4_step(float dt);
+  void display(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos);
+
+private:
+  void getK(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  vec3 position;
+  vec3 velocity;
+  vec3 color;
+  float mass;
+  float radius = 0.5;
+  int numVertices;
   int bodyNum; // need to make a getter
 
   vector<vec3> trailPoints; // Buffer for trail
   GLuint trailingTailBufferData;
-
-private:
-  vec3 position;
-  vec3 color;
-  int vertNum;
-
+  
   GLuint CelestialBodyID;
   GLuint MatrixIDCelestialBody;
   GLuint ViewMatrixIDCelestialBody;

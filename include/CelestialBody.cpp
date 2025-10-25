@@ -1,27 +1,18 @@
 #include "CelestialBody.h"
 #include <iostream>
 
-int CelestialBody::bodyCount;
-int CelestialBody::MAX_TRAIL_POINTS;
+vector<CelestialBody*> CelestialBody::bodies;
+// int CelestialBody::bodyCount;
+int CelestialBody::MAX_TRAIL_POINTS = 1000;
 
-CelestialBody::CelestialBody(vec3 p, vec3 c, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size)
+CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size)
+: position(p), velocity(v), color(c), mass(m), numVertices(size)
 {
-  // cout << ", " << &CBShaderHandleArray << endl;
-  // cout << ", " << &CBShaderHandleArray[0] << endl;
-  // cout << ", " << CBShaderHandleArray[0] << endl;
-  // cout << ", " << *CBShaderHandleArray[0] << endl;
-  // cout << ", " << &CBShaderHandleArray[1] << endl;
-  // cout << ", " << CBShaderHandleArray[1] << endl;
-  // cout << ", " << *(CBShaderHandleArray[1]) << endl;
+  // Set body number
+  bodyNum = CelestialBody::bodies.size();
 
-
-  setPosition(p);
-  setColor(c);
-
-  bodyNum = bodyCount;
-  bodyCount++;
-
-  vertNum = size;
+  // Add to list containing all instances
+  CelestialBody::bodies.push_back(this);
 
   CelestialBodyID = *CBShaderHandleArray[0];  
   MatrixIDCelestialBody = *CBShaderHandleArray[1];  
@@ -40,18 +31,6 @@ CelestialBody::CelestialBody(vec3 p, vec3 c, vector<GLuint*> CBShaderHandleArray
   trailingTrailColorID = *trailBufferArray[2];
 
   glGenBuffers(1, &trailingTailBufferData);
-  // glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
-  // glBufferData(GL_ARRAY_BUFFER, sizeof(trailPoints), &trailPoints[0] , GL_DYNAMIC_DRAW);
-}
-
-vec3 CelestialBody::getPosition()
-{
-  return position;
-}
-
-vec3 CelestialBody::getColor()
-{
-  return color;
 }
 
 void CelestialBody::addPosition(vec3 pos)
@@ -59,9 +38,51 @@ void CelestialBody::addPosition(vec3 pos)
   position += pos;
 }
 
+void CelestialBody::addVelocity(vec3 vel)
+{
+  velocity += vel;
+}
+
+// // Getters
+vec3 CelestialBody::getPosition()
+{
+  return position;
+}
+
+vec3 CelestialBody::getVelocity()
+{
+  return velocity;
+}
+
+vec3 CelestialBody::getColor()
+{
+  return color;
+}
+
+float CelestialBody::getMass()
+{
+  return mass;
+}
+
+float CelestialBody::getRadius()
+{
+  return radius;
+}
+
+int CelestialBody::getBodyNum()
+{
+  return bodyNum;
+}
+
+// // Setters
 void CelestialBody::setPosition(vec3 pos)
 {
   position = pos;
+}
+
+void CelestialBody::setVelocity(vec3 vel)
+{
+  velocity = vel;
 }
 
 void CelestialBody::setColor(vec3 col)
@@ -69,7 +90,88 @@ void CelestialBody::setColor(vec3 col)
   color = col;
 }
 
-void CelestialBody::draw(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos)
+void CelestialBody::setMass(float m)
+{
+  mass = m;
+}
+
+void CelestialBody::setRadius(float r)
+{
+  radius = r;
+}
+
+
+// for(int i = 0 ; i < 4 ; i++)
+//   {
+//     for(int j = 0 ; j < CelestialBody::bodies.size() ; j++)
+//     {
+//       for(int k = 0 ; k < 3 ; k++)
+//       {
+//         KR[i][j][k] = 0;
+//       }
+//     }
+//   }
+
+//   for(int i = 0 ; i < 4 ; i++)
+//   {
+//     for(int j = 0 ; j < CelestialBody::bodies.size() ; j++)
+//     {
+//       for(int k = 0 ; k < 3 ; k++)
+//       {
+//         cout << ", " << KR[i][j][k];
+//       }
+//       cout << endl;
+//     }
+//     cout << endl;
+//   }
+
+
+void CelestialBody::getK(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
+{
+  vector<vector<float>> accs(CelestialBody::bodies.size(), vector<float>(3,0));
+
+  for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
+  {
+
+  }
+}
+
+void CelestialBody::RK4_step(float dt)
+{
+  vector<vector<vec3>> KR(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0, 0, 0)));
+  vector<vector<vec3>> KV(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0, 0, 0)));
+  
+  vector<vec3> KRcurr(CelestialBody::bodies.size(), vec3(0,0,0));
+  vector<vec3> KVcurr(CelestialBody::bodies.size(), vec3(0,0,0));
+  
+  vector<float> div = {1, 2, 2, 1};
+
+  for(int i = 0 ; i < 4 ; i++)
+  {
+    vector<vec3> poss, vels;
+    vector<float> mass;
+
+    for(int j = 0 ; j < CelestialBody::bodies.size() ; j++)
+    {
+      poss.push_back(CelestialBody::bodies[j]->getPosition() + KRcurr[j] * dt / div[i]);
+      vels.push_back(CelestialBody::bodies[j]->getVelocity() + KVcurr[j] * dt / div[i]);
+      mass.push_back(CelestialBody::bodies[j]->getMass());
+    }
+
+    CelestialBody::getK(poss, vels, mass, KRcurr, KVcurr);
+    KR[i] = KRcurr;
+    KV[i] = KRcurr;
+  }
+
+  for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
+  {
+    CelestialBody::bodies[i]->addPosition((1 / 6) * div * KV[i]); // need to figure out how to do withouth this matrix multiplication
+  }
+  
+  
+}
+
+void CelestialBody::display(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos)
 {
   glUseProgram(CelestialBodyID);
   // Update the uniform
@@ -91,10 +193,10 @@ void CelestialBody::draw(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos)
 
   // Determine position
   mat4 ModelMatrix = mat4(1.0);
-  
+
   // should make a matrix for each element maybe
   ModelMatrix = translate(ModelMatrix, getPosition());
-  ModelMatrix = scale(ModelMatrix, vec3(0.5f, 0.5f, 0.5f));  // or different scale values
+  ModelMatrix = scale(ModelMatrix, vec3(radius, radius, radius));  // or different scale values
   // ModelMatrix = rotate(ModelMatrix, (angleSeparation * i), vec3(0,1,0));
   mat4 MVP1 = ProjectionMatrix * ViewMatrix * ModelMatrix;
   
@@ -105,7 +207,7 @@ void CelestialBody::draw(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos)
   glUniform3f(colorIDCelestialBody, getColor().x, getColor().y, getColor().z);
 
   // Draw the triangles !
-  glDrawElements(GL_TRIANGLES, vertNum, GL_UNSIGNED_SHORT, (void*)0);
+  glDrawElements(GL_TRIANGLES, numVertices, GL_UNSIGNED_SHORT, (void*)0);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
   glDisableVertexAttribArray(2);
