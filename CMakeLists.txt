@@ -73,6 +73,7 @@ add_executable(n_body_simulator
 	include/vboindexer.hpp
 	include/CelestialBody.cpp
 	include/CelestialBody.h
+	include/definitions.h
 )
 target_link_libraries(n_body_simulator
 	${ALL_LIBS}

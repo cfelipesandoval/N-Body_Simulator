@@ -1,5 +1,4 @@
-#include "include/definitions.h"
-
+#include <include/definitions.h> // Need to figure out how to define in a .cpp file instead of in the .h
 
 int main(void)
 {
@@ -39,7 +38,7 @@ int main(void)
     computeMatricesFromInputs();
     mat4 ProjectionMatrix = getProjectionMatrix();
     mat4 ViewMatrix = getViewMatrix();
-    
+
     // Iterate through bodies
     for(auto& el : bodies)
     {

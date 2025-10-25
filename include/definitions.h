@@ -1,4 +1,5 @@
 #pragma once
+
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,12 +124,6 @@ int initShaders()
   ModelMatrixIDCelestialBody = glGetUniformLocation(CelestialBodyID, "M");
   colorIDCelestialBody = glGetUniformLocation(CelestialBodyID, "COLOR");
   LightIDCelestialBody = glGetUniformLocation(CelestialBodyID, "LightPosition_worldspace");
-  
-  // // Declaring Buffers
-  // GLuint vertexBufferCelestialBody;
-  // GLuint uvBufferCelestialBody;
-  // GLuint normalBufferCelestialBody;
-  // GLuint elementBufferCelestialBody;
 
   // // Initialize buffers for trailing tail
   trailingTailID = LoadShaders("resources/shaders/TrailingTailShading.vertexshader", "resources/shaders/TrailingTailShading.fragmentshader");
