@@ -10,6 +10,12 @@ CelestialBody::CelestialBody(vec3 p, vec3 c)
   bodyNum = bodyCount;
 
   bodyCount++;
+
+  // is this ok?
+  
+	glGenBuffers(1, &trailingTailBufferData);
+	glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trailPoints), &trailPoints[0] , GL_DYNAMIC_DRAW);
 }
 
 vec3 CelestialBody::getPosition()

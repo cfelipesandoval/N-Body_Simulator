@@ -8,7 +8,6 @@
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -25,10 +24,10 @@ using namespace glm;
 #include <iostream>
 using namespace std;
 
+GLFWwindow* window;
 
 
-
-int main(void)
+int initWindow(GLFWwindow** win)
 {
 	// Initialize GLFW
 	if(!glfwInit())
@@ -45,14 +44,14 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(1024, 768, "Tutorial 09 - Rendering several models", NULL, NULL);
-	if( window == NULL ){
+	*win = glfwCreateWindow(1024, 768, "Tutorial 09 - Rendering several models", NULL, NULL);
+	if( *win == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		getchar();
 		glfwTerminate();
 		return -1;
 	}
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(*win);
     
 	// Initialize GLEW
 	glewExperimental = true; // Needed for core profile
@@ -64,13 +63,13 @@ int main(void)
 	}
 
 	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	glfwSetInputMode(*win, GLFW_STICKY_KEYS, GL_TRUE);
 	// Hide the mouse and enable unlimited movement
 	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	
 	// Set the mouse at the center of the screen
 	glfwPollEvents();
-	glfwSetCursorPos(window, 1024/2, 768/2);
+	glfwSetCursorPos(*win, 1024/2, 768/2);
 
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -80,8 +79,16 @@ int main(void)
 	// Accept fragment if it is closer to the camera than the former one
 	glDepthFunc(GL_LESS); 
 
-	// glEnable(GL_CULL_FACE);
-	// glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	return 1;
+}
+
+int main(void)
+{
+	// // Initialize Window
+	if(initWindow(&window) == -1) return -1;
 
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
@@ -91,7 +98,7 @@ int main(void)
 	// Create and compile our GLSL program from the shaders
 	GLuint CelestialBodyID = LoadShaders("resources/shaders/CelestialBodyShading.vertexshader", "resources/shaders/CelestialBodyShading.fragmentshader");
 
-	// Get a handle for our MVP, View, and Model uniforms
+	// Maybe add these to a larger array that holds their values so you can pass them into ech object?
 	GLuint MatrixIDCelestialBody = glGetUniformLocation(CelestialBodyID, "MVP");
 	GLuint ViewMatrixIDCelestialBody = glGetUniformLocation(CelestialBodyID, "V");
 	GLuint ModelMatrixIDCelestialBody = glGetUniformLocation(CelestialBodyID, "M");
@@ -110,24 +117,26 @@ int main(void)
 	std::vector<vec2> indexed_uvs;
 	std::vector<vec3> indexed_normals;
 	indexVBO(vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals);
-
-	// Buffers
+	
+	// // Declaring Buffers
+	// Maybe add these to a larger array that holds their values so you can pass them into ech object?
 	GLuint vertexBufferCelestialBody;
+	GLuint uvBufferCelestialBody;
+	GLuint normalBufferCelestialBody;
+	GLuint elementBufferCelestialBody;
+
 	glGenBuffers(1, &vertexBufferCelestialBody);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferCelestialBody);
 	glBufferData(GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof(vec3), &indexed_vertices[0], GL_STATIC_DRAW);
-
-	GLuint uvBufferCelestialBody;
+	
 	glGenBuffers(1, &uvBufferCelestialBody);
 	glBindBuffer(GL_ARRAY_BUFFER, uvBufferCelestialBody);
 	glBufferData(GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof(vec2), &indexed_uvs[0], GL_STATIC_DRAW);
-
-	GLuint normalBufferCelestialBody;
+	
 	glGenBuffers(1, &normalBufferCelestialBody);
 	glBindBuffer(GL_ARRAY_BUFFER, normalBufferCelestialBody);
 	glBufferData(GL_ARRAY_BUFFER, indexed_normals.size() * sizeof(vec3), &indexed_normals[0], GL_STATIC_DRAW);
-
-	GLuint elementBufferCelestialBody;
+	
 	glGenBuffers(1, &elementBufferCelestialBody);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferCelestialBody);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0] , GL_STATIC_DRAW);
@@ -136,7 +145,7 @@ int main(void)
 	glUseProgram(CelestialBodyID);
 	GLuint LightIDCelestialBody = glGetUniformLocation(CelestialBodyID, "LightPosition_worldspace");
 	
-	// Get handle for toggling diffusion and specular components
+	// need to get rid of this in the shader files
 	GLuint diffSpecIDCelestialBody = glGetUniformLocation(CelestialBodyID, "diffSpec");
   glUniform1f(diffSpecIDCelestialBody, 1); // Initialize to on by default
 
@@ -147,20 +156,9 @@ int main(void)
 	GLuint trailingTailID = LoadShaders("resources/shaders/TrailingTailShading.vertexshader", "resources/shaders/TrailingTailShading.fragmentshader");
 	GLuint MatrixIDTrailingTail = glGetUniformLocation(trailingTailID, "MVP");
 	GLuint trailingTrailColorID = glGetUniformLocation(trailingTailID, "trailColor");
-	
-	vector<vec3> trailPoints;
 
-	// Bind your VAO and VBO for the trail
-	GLuint trailingTailBufferData;
-
-	glGenBuffers(1, &trailingTailBufferData);
-	glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(trailPoints), &trailPoints[0] , GL_DYNAMIC_DRAW);
-
-	// Boolean to check if diffusion and specular components have been toggled
-	bool diffSpecOn = true;
 	// Position of light
-	vec3 lightPos = vec3(0, 5, 0);
+	vec3 lightPos = vec3(0, 0, 0);
 
 	vec3 positions[3] = {vec3(1,0,1), vec3(-1,0,-1), vec3(0,0,5)};
 	vec3 colors[3] = {vec3(1,0,0), vec3(0,1,0), vec3(0,0,1)};
@@ -179,7 +177,7 @@ int main(void)
 
 	double lastTime = glfwGetTime();
 
-	int MAX_TRAIL_POINTS = 1000;
+	int MAX_TRAIL_POINTS = 2000;
 
   do
   {	
@@ -192,25 +190,6 @@ int main(void)
 		computeMatricesFromInputs();
 		mat4 ProjectionMatrix = getProjectionMatrix();
 		mat4 ViewMatrix = getViewMatrix();
-		
-		// Check if L key is pressed and toggle diffusion and specular components for both the square and CelestialBody models
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_L) == GLFW_RELEASE)
-    {
-			if(diffSpecOn)
-			{
-				glUseProgram(CelestialBodyID);
-				glUniform1f(diffSpecIDCelestialBody, 0);
-				diffSpecOn = false; 
-			}
-			else
-			{
-				glUseProgram(CelestialBodyID);
-				glUniform1f(diffSpecIDCelestialBody, 1);
-				diffSpecOn = true;
-			} 
-    }
-
-		
 
 		// Iterate through bodies
 		for(auto& el : bodies)
@@ -237,11 +216,11 @@ int main(void)
 			// Determine position
 			mat4 ModelMatrix = mat4(1.0);
 
-			el->setPosition(vec3(el->bodyNum * 5 * cos(2 * currentTime), 0, el->bodyNum * 5 * sin(2 * currentTime)));
+			el->setPosition(vec3(el->bodyNum * 5 * cos(2 * currentTime + el->bodyNum * 2), 0, el->bodyNum * 5 * sin(2 * currentTime + el->bodyNum * 2)));
 			
+			// should make a matrix for each element maybe
 			ModelMatrix = translate(ModelMatrix, el->getPosition());
-			cout << el->getPosition().x << ", " << el->getPosition().y << ", " << el->getPosition().z  <<endl;
-			// ModelMatrix = scale(ModelMatrix, vec3(5.0f, 5.0f, 5.0f));  // or different scale values
+			ModelMatrix = scale(ModelMatrix, vec3(0.5f, 0.5f, 0.5f));  // or different scale values
 			// ModelMatrix = rotate(ModelMatrix, (angleSeparation * i), vec3(0,1,0));
 			mat4 MVP1 = ProjectionMatrix * ViewMatrix * ModelMatrix;
 			
@@ -254,7 +233,7 @@ int main(void)
 			// Draw the triangles !
 			glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, (void*)0);
 			
-			
+
 			// I think I need to add this to each body?
 			glUseProgram(trailingTailID);
 
@@ -262,24 +241,24 @@ int main(void)
 			
 			glUniformMatrix4fv(MatrixIDTrailingTail, 1, GL_FALSE, &thing[0][0]);
 
-			trailPoints.push_back(el->getPosition());
+			el->trailPoints.push_back(el->getPosition());
 
-			if (trailPoints.size() > MAX_TRAIL_POINTS) 
+			if (el->trailPoints.size() > MAX_TRAIL_POINTS) 
 			{
-					trailPoints.erase(trailPoints.begin());
+					el->trailPoints.erase(el->trailPoints.begin());
 			}
 
 			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
-			glBufferData(GL_ARRAY_BUFFER, trailPoints.size() * sizeof(vec3), trailPoints.data(), GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, el->trailingTailBufferData);
+			glBufferData(GL_ARRAY_BUFFER, el->trailPoints.size() * sizeof(vec3), el->trailPoints.data(), GL_DYNAMIC_DRAW);
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 
 			// Set line width if desired
 			glLineWidth(2.0f);
 			// Set color
-			glUniform4f(trailingTrailColorID, 1.0f, 0.0f, 0.0f, 1.0f); // Red trail
+			glUniform4f(trailingTrailColorID, el->getColor().x, el->getColor().y, el->getColor().z, 1.0f); // Red trail
 
-			glDrawArrays(GL_LINE_STRIP, 0, trailPoints.size());
+			glDrawArrays(GL_LINE_STRIP, 0, el->trailPoints.size());
 			glDisableVertexAttribArray(0);
 		}
 
