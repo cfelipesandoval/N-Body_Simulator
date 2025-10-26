@@ -15,6 +15,8 @@ CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CB
   // Set body number
   bodyNum = CelestialBody::bodies.size();
 
+  // Maybe add a conditional so you can make a static object like a light source?
+
   // Add to list containing all instances
   CelestialBody::bodies.push_back(this);
 

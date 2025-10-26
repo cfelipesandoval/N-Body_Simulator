@@ -109,7 +109,7 @@ int main(void)
   //                       vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), 
   //                       vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), };
 
-  // Switch y and z coordinates
+  // // Switch y and z coordinates
   // for(int i = 0 ; i < positions.size() ; i++)
   // {
   //   positions[i] = vec3(positions[i].x, positions[i].z, positions[i].y);
@@ -134,6 +134,16 @@ int main(void)
 
   do
   {
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Display bodies
+    CelestialBody::display(lightPos);
+
+    // Swap buffers
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+
     if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
     {
       for(int i = 0 ; i < 50 ; i++) CelestialBody::RK4_step(0.0001);
@@ -142,17 +152,6 @@ int main(void)
     {
       for(int i = 0 ; i < 100 ; i++) CelestialBody::RK4_step(0.0001);
     }
-
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-    // Display bodies
-    CelestialBody::display(lightPos);
-
-    // Swap buffers
-    glfwSwapBuffers(window);
-    glfwPollEvents();
 
   } while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0); // Check if the ESC key was pressed or the window was closed
 
