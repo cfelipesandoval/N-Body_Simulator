@@ -2,7 +2,7 @@
 #include <iostream>
 
 vector<CelestialBody*> CelestialBody::bodies;
-// int CelestialBody::bodyCount;
+float CelestialBody::G = 1;
 int CelestialBody::MAX_TRAIL_POINTS = 1000;
 
 CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size)
@@ -126,14 +126,47 @@ void CelestialBody::setRadius(float r)
 //   }
 
 
-void CelestialBody::getK(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
+void CelestialBody::getK(vector<vec3> &poss, vector<float> &mass, vector<vec3> &KVcurr)
 {
-  vector<vector<float>> accs(CelestialBody::bodies.size(), vector<float>(3,0));
+  vector<vec3> accs(CelestialBody::bodies.size(), vec3(0, 0, 0));
+  vector<vec3> possCurr(poss.size(), vec3(0, 0, 0));
+  vector<float> massCurr(mass.size());
+
+  // cout << "new" << endl;
+  // for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
+  // {
+  //   for(int j = 0 ; j < 3 ; j++)
+  //   {
+  //     cout << poss[i].x << ", " << poss[i].y << ", " << poss[i].z << endl;
+  //   }
+  // }  
 
   for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
   {
+    // cout << "new loop index: " << i << endl;
+    // Copy and remove contribution from itself
+    possCurr = poss;
+    possCurr.erase(possCurr.begin() + i);
 
+    massCurr = mass;
+    massCurr.erase(massCurr.begin() + i);
+
+    for(int j = 0 ; j < possCurr.size() ; j++)
+    {
+      accs[i] -= CelestialBody::G * massCurr[j] * ((poss[i] - possCurr[j]) / (float)pow(length(poss[i] - possCurr[j]), 3));
+    }
   }
+
+  // cout << "new" << endl;
+  // for(int i = 0 ; i < accs.size() ; i++)
+  // {
+  //   for(int j = 0 ; j < 3 ; j++)
+  //   {
+  //     cout << accs[i].x << ", " << accs[i].y << ", " << accs[i].z << endl;
+  //   }
+  // }
+
+  KVcurr = accs;
 }
 
 void CelestialBody::RK4_step(float dt)
@@ -158,17 +191,26 @@ void CelestialBody::RK4_step(float dt)
       mass.push_back(CelestialBody::bodies[j]->getMass());
     }
 
-    CelestialBody::getK(poss, vels, mass, KRcurr, KVcurr);
-    KR[i] = KRcurr;
-    KV[i] = KRcurr;
+    CelestialBody::getK(poss, mass, KVcurr);
+
+    KR[i] = vels;
+    KV[i] = KVcurr;
   }
 
   for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
   {
-    CelestialBody::bodies[i]->addPosition((1 / 6) * div * KV[i]); // need to figure out how to do withouth this matrix multiplication
+    vec3 tempR = vec3(0,0,0);
+    vec3 tempV = vec3(0,0,0);
+    
+    for(int j = 0 ; j < 4 ; j++)
+    {
+      tempR += KR[j][i] * div[j];
+      tempV += KV[j][i] * div[j];
+    }
+    
+    CelestialBody::bodies[i]->addPosition(-((float)1 / (float)6) * tempR * dt); // need to figure out how to do withouth this matrix multiplication
+    CelestialBody::bodies[i]->addVelocity(-((float)1 / (float)6) * tempV * dt);
   }
-  
-  
 }
 
 void CelestialBody::display(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos)

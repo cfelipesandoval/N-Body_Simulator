@@ -1,0 +1,1 @@
+cout << el->getPosition().x << ", " << el->getPosition().y << ", " << el->getPosition().z << endl;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm> 
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -12,6 +13,7 @@ class CelestialBody
 {
 public:
   static vector<CelestialBody*> bodies;
+  static float G;
   static int MAX_TRAIL_POINTS;
 
   CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size);
@@ -34,11 +36,11 @@ public:
   void setMass(float);
   void setRadius(float);
 
-  void RK4_step(float dt);
+  static void RK4_step(float dt);
   void display(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos);
 
 private:
-  void getK(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static void getK(vector<vec3> &poss, vector<float> &mass, vector<vec3> &KRcurr); // Put in private
   vec3 position;
   vec3 velocity;
   vec3 color;
