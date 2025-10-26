@@ -1,5 +1,8 @@
 #include <include/definitions.h> // Need to figure out how to define in a .cpp file instead of in the .h
 
+
+const int FPS = 60;
+
 int main(void)
 {
   // // Initialize Window
@@ -14,11 +17,108 @@ int main(void)
   float G = 1;
   CelestialBody::G = G;
   vec3 v = vec3(0.3471128135672417, 0, 0.532726851767674);
+  
+  vec3 pos1 = (float)3 * vec3(1,0,0);
+  vec3 pos2 = (float)3 * vec3(-1,0,0);
+  vec3 pos3 = vec3(0,0,0);
 
-  vector<vec3> positions = {(float)3 * vec3(1,0,0), (float)3 * vec3(-1,0,0), (float)3 * vec3(0,0,0)};
-  vector<vec3> velocities = {v, v, (float)-2 * v};
+  vec3 vel1 = v;
+  vec3 vel2 = v;
+  vec3 vel3 = (float)-2 * v;
+
+  vector<vec3> positions = {pos1,pos2,pos3};
+  vector<vec3> velocities = {vel1,vel2,vel3};
   vector<vec3> colors = {vec3(1,0,0), vec3(0,1,0), vec3(0,0,1)};
   vector<float> masses = {3, 3, 3};
+
+  
+
+  CelestialBody::MAX_TRAIL_POINTS = 500;
+
+  // float G = 1;
+  // CelestialBody::G = G;
+  
+  // float r = 20;
+  
+  // vec3 v = vec3(0.3471128135672417, 0.532726851767674, 0);
+
+  // vec3 pos0 = vec3(0,0,0);
+  // vec3 vel0 = vec3(0,0,0);
+  
+  // vec3 pos1 = vec3(1, 0, 0);
+  // vec3 pos2 = vec3(-1, 0, 0);
+  // vec3 pos3 = vec3(0, 0, 0);
+  
+  // vec3 pos4 = vec3(1, 0, 0) + vec3(1,0,0) * r;
+  // vec3 pos5 = vec3(-1, 0, 0) + vec3(1,0,0) * r;
+  // vec3 pos6 = vec3(0, 0, 0) + vec3(1,0,0) * r;
+  
+  // vec3 pos7 = vec3(1, 0, 0) - vec3(1,0,0) * r;
+  // vec3 pos8 = vec3(-1, 0, 0) - vec3(1,0,0) * r;
+  // vec3 pos9 = vec3(0, 0, 0) - vec3(1,0,0) * r;
+  
+  // vec3 pos10 = vec3(1, 0, 0) + vec3(0,1,0) * r;
+  // vec3 pos11 = vec3(-1, 0, 0) + vec3(0,1,0) * r;
+  // vec3 pos12 = vec3(0, 0, 0) + vec3(0,1,0) * r;
+  
+  // vec3 pos13 = vec3(1, 0, 0) + vec3(0,-1,0) * r;
+  // vec3 pos14 = vec3(-1, 0, 0) + vec3(0,-1,0) * r;
+  // vec3 pos15 = vec3(0, 0, 0) + vec3(0,-1,0) * r;
+
+  // vec3 vel1 = v;
+  // vec3 vel2 = v;
+  // vec3 vel3 = (float)-2 * v;
+  
+  // float v2 = sqrt(G * (float)(10)  / r);
+    
+  // vec3 vel4 = v + v2 * vec3(0,1,0);
+  // vec3 vel5 = v + v2 * vec3(0,1,0);
+  // vec3 vel6 = (float)-2 * v + v2 * vec3(0,1,0);
+  
+  // vec3 vel7 = v - v2 * vec3(0,1,0);
+  // vec3 vel8 = v - v2 * vec3(0,1,0);
+  // vec3 vel9 = (float)-2 * v - v2 * vec3(0,1,0);
+  
+  // vec3 vel10 = v + v2 * vec3(-1,0,0);
+  // vec3 vel11 = v + v2 * vec3(-1,0,0);
+  // vec3 vel12 = (float)-2 * v + v2 * vec3(-1,0,0);
+  
+  // vec3 vel13 = v + v2 * vec3(1,0,0);
+  // vec3 vel14 = v + v2 * vec3(1,0,0);
+  // vec3 vel15 = (float)-2 * v + v2 * vec3(1,0,0);
+
+  // vector<float> masses = {10,/*1,1,1,*/
+  //                         1,1,1,
+  //                         1,1,1,
+  //                         1,1,1,
+  //                         1,1,1};
+
+  // vector<vec3> positions = {pos0,/*pos1,pos2,pos3,*/
+  //                           pos4,pos5,pos6,
+  //                           pos7,pos8,pos9, 
+  //                           pos10, pos11, pos12, 
+  //                           pos13, pos14, pos15};
+  // vector<vec3> velocities = {vel0,/*vel1,vel2,vel3,*/
+  //                           vel4,vel5,vel6,
+  //                           vel7,vel8,vel9, 
+  //                           vel10, vel11, vel12, 
+  //                           vel13, vel14, vel15};
+  // vector<vec3> colors = {vec3(1,1,1),/*vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), */
+  //                       vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), 
+  //                       vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), 
+  //                       vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), 
+  //                       vec3(1,1,1), vec3(0.34509803921568627, 0.7686274509803922, 0.8666666666666667), vec3(0.9882352941176471, 0.3843137254901961, 0.3333333333333333), };
+
+  // Switch y and z coordinates
+  // for(int i = 0 ; i < positions.size() ; i++)
+  // {
+  //   positions[i] = vec3(positions[i].x, positions[i].z, positions[i].y);
+  // }
+
+  // for(int i = 0 ; i < velocities.size() ; i++)
+  // {
+  //   velocities[i] = vec3(velocities[i].x, velocities[i].z, velocities[i].y);
+  // }
 
 
   for(int i = 0 ; i < masses.size() ; i++)
@@ -27,50 +127,28 @@ int main(void)
     bodies[i]->setRadius(0.125);
   }
 
+  // CelestialBody::cameraFollow(0);
 
   // Position of light
-  vec3 lightPos = vec3(1, 1, 1); // maybe add to the shader so the "sun" glows
-  double lastTime = glfwGetTime();
-	int nbFrames = 0;
+  vec3 lightPos = vec3(0,10,0); // maybe add to the shader so the "sun" glows
+
   do
   {
-    double currentTime = glfwGetTime();
-
-    nbFrames++;
-		if (currentTime - lastTime >= 1.0){ // If last prinf() was more than 1sec ago
-			// printf and reset
-			printf("%f ms/frame\n", 1000.0/double(nbFrames));
-      printf("%f frames/s\n", double(nbFrames));
-			nbFrames = 0;
-			lastTime += 1.0;
-		}
-
     if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
     {
-      CelestialBody::MAX_TRAIL_POINTS = 500;
-      for(int i = 0 ; i < 5 ; i++) CelestialBody::RK4_step(0.001);
+      for(int i = 0 ; i < 50 ; i++) CelestialBody::RK4_step(0.0001);
     }
     else 
     {
-      CelestialBody::MAX_TRAIL_POINTS = 50;
-      for(int i = 0 ; i < 50 ; i++) CelestialBody::RK4_step(0.001);
+      for(int i = 0 ; i < 100 ; i++) CelestialBody::RK4_step(0.0001);
     }
-  
-    computeMatricesFromInputs();
-    mat4 ProjectionMatrix = getProjectionMatrix();
-    mat4 ViewMatrix = getViewMatrix();
 
-    lastTime += 1.0;
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Compute the MVP matrix from keyboard and mouse input
 
-    // Iterate through bodies
-    for(auto& el : bodies)
-    {
-      el->display(ProjectionMatrix, ViewMatrix, lightPos);
-    }
+    // Display bodies
+    CelestialBody::display(lightPos);
 
     // Swap buffers
     glfwSwapBuffers(window);

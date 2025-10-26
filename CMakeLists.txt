@@ -15,7 +15,7 @@ if( CMAKE_BINARY_DIR MATCHES " " )
 	message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3") 
 
 # Compile external dependencies 
 add_subdirectory (external)
@@ -29,7 +29,6 @@ include(MSVCMultipleProcessCompile) # /MP
 if(INCLUDE_DISTRIB)
 	add_subdirectory(distrib)
 endif(INCLUDE_DISTRIB)
-
 
 
 include_directories(
@@ -46,6 +45,7 @@ set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW_1130
+	OpenMP::OpenMP_CXX
 )
 
 add_definitions(
@@ -56,9 +56,8 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
+find_package(OpenMP REQUIRED)
 
-
-# Tutorial 9 - several objects
 add_executable(n_body_simulator
 	n_body_simulator/n_body_simulator.cpp
 	include/shader.cpp
@@ -78,6 +77,8 @@ add_executable(n_body_simulator
 target_link_libraries(n_body_simulator
 	${ALL_LIBS}
 )
+# target_link_libraries(n_body_simulator PRIVATE OpenMP::OpenMP_CXX)
+
 # Xcode and Visual working directories
 set_target_properties(n_body_simulator PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/n_body_simulator/")
 create_target_launcher(n_body_simulator WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/n_body_simulator/")

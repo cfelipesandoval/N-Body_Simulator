@@ -40,11 +40,11 @@ void computeMatricesFromInputs()
 
 
 	// Move closer to the origin
-	if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS){
+	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
 		radius -= 5 * speed * deltaTime;
 	}
 	// Move farther from the origin
-	if (glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS)
+	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS)
 	{
 		radius += 5 * speed * deltaTime;
 	}
@@ -59,12 +59,12 @@ void computeMatricesFromInputs()
 		phi += deltaTime * speed;
 	}
 	// Rotate up
-	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS)
+	if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS)
 	{
 		theta += deltaTime * speed;
 	}
 	// Rotate down
-	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS)
+	if (glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS)
 	{
 		theta -= deltaTime * speed;
 	}
@@ -85,7 +85,7 @@ void computeMatricesFromInputs()
 	float FoV = initialFoV;
 
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	ProjectionMatrix = perspective(radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+	ProjectionMatrix = perspective(radians(FoV), 4.0f / 3.0f, 0.1f, 10000.0f);
 	
 	// Camera matrix
 	ViewMatrix = lookAt(position, vec3(0,0,0), vec3(0,1,0));

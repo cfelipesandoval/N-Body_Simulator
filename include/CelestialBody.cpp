@@ -1,7 +1,11 @@
 #include "CelestialBody.h"
+#include <include/controls.hpp>
 #include <iostream>
 
 vector<CelestialBody*> CelestialBody::bodies;
+int CelestialBody::follow = -1;
+
+
 float CelestialBody::G = 1;
 int CelestialBody::MAX_TRAIL_POINTS = 1000;
 
@@ -100,50 +104,44 @@ void CelestialBody::setRadius(float r)
   radius = r;
 }
 
-
-// for(int i = 0 ; i < 4 ; i++)
-//   {
-//     for(int j = 0 ; j < CelestialBody::bodies.size() ; j++)
-//     {
-//       for(int k = 0 ; k < 3 ; k++)
-//       {
-//         KR[i][j][k] = 0;
-//       }
-//     }
-//   }
-
-//   for(int i = 0 ; i < 4 ; i++)
-//   {
-//     for(int j = 0 ; j < CelestialBody::bodies.size() ; j++)
-//     {
-//       for(int k = 0 ; k < 3 ; k++)
-//       {
-//         cout << ", " << KR[i][j][k];
-//       }
-//       cout << endl;
-//     }
-//     cout << endl;
-//   }
-
-
-void CelestialBody::getK(vector<vec3> &poss, vector<float> &mass, vector<vec3> &KVcurr)
+void CelestialBody::enableTrail()
 {
-  vector<vec3> accs(CelestialBody::bodies.size(), vec3(0, 0, 0));
+  displayTrail = true;
+}
+
+void CelestialBody::disableTrail()
+{
+  displayTrail = false;
+}
+
+void CelestialBody::enableAllTrails()
+{
+  for(auto& el : CelestialBody::bodies)
+  {
+    el->displayTrail = true;
+  }
+}
+
+void CelestialBody::disableAllTrails()
+{
+  for(auto& el : CelestialBody::bodies)
+  {
+    el->displayTrail = false;
+  }
+}
+
+void CelestialBody::getK(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
+{
   vector<vec3> possCurr(poss.size(), vec3(0, 0, 0));
   vector<float> massCurr(mass.size());
 
-  // cout << "new" << endl;
-  // for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
-  // {
-  //   for(int j = 0 ; j < 3 ; j++)
-  //   {
-  //     cout << poss[i].x << ", " << poss[i].y << ", " << poss[i].z << endl;
-  //   }
-  // }  
-
+  // auto startTime1 = chrono::high_resolution_clock::now();
+  // auto endTime1 = chrono::high_resolution_clock::now();
+  // cout << "Time 1 taken: " << (endTime1 - startTime1).count() << endl;
+  
+  // #pragma omp parallel for collapse(2)
   for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
   {
-    // cout << "new loop index: " << i << endl;
     // Copy and remove contribution from itself
     possCurr = poss;
     possCurr.erase(possCurr.begin() + i);
@@ -151,49 +149,47 @@ void CelestialBody::getK(vector<vec3> &poss, vector<float> &mass, vector<vec3> &
     massCurr = mass;
     massCurr.erase(massCurr.begin() + i);
 
+    vec3 p = poss[i];
+    vec3 a = vec3(0,0,0);
+    // cout << "here" << endl;
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
-      accs[i] -= CelestialBody::G * massCurr[j] * ((poss[i] - possCurr[j]) / (float)pow(length(poss[i] - possCurr[j]), 3));
+      float mag = length(p - possCurr[j]);
+      a -= CelestialBody::G * massCurr[j] * ((p - possCurr[j]) / (mag * mag * mag));
     }
+    
+    KRcurr[i] = vels[i];
+    KVcurr[i] = a;
   }
-
-  // cout << "new" << endl;
-  // for(int i = 0 ; i < accs.size() ; i++)
-  // {
-  //   for(int j = 0 ; j < 3 ; j++)
-  //   {
-  //     cout << accs[i].x << ", " << accs[i].y << ", " << accs[i].z << endl;
-  //   }
-  // }
-
-  KVcurr = accs;
 }
 
 void CelestialBody::RK4_step(float dt)
 {
-  vector<vector<vec3>> KR(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0, 0, 0)));
-  vector<vector<vec3>> KV(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0, 0, 0)));
+  vector<vector<vec3>> KR(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
+  vector<vector<vec3>> KV(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
   
   vector<vec3> KRcurr(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<vec3> KVcurr(CelestialBody::bodies.size(), vec3(0,0,0));
-  
+
   vector<float> div = {1, 2, 2, 1};
+  // vec<4,float> div = {1, 2, 2, 1};
+
+  vector<vec3> poss(CelestialBody::bodies.size(), vec3(0,0,0));
+  vector<vec3> vels(CelestialBody::bodies.size(), vec3(0,0,0));
+  vector<float> mass(CelestialBody::bodies.size());
 
   for(int i = 0 ; i < 4 ; i++)
   {
-    vector<vec3> poss, vels;
-    vector<float> mass;
-
     for(int j = 0 ; j < CelestialBody::bodies.size() ; j++)
     {
-      poss.push_back(CelestialBody::bodies[j]->getPosition() + KRcurr[j] * dt / div[i]);
-      vels.push_back(CelestialBody::bodies[j]->getVelocity() + KVcurr[j] * dt / div[i]);
-      mass.push_back(CelestialBody::bodies[j]->getMass());
+      poss[j] = (CelestialBody::bodies[j]->getPosition() + KRcurr[j] * dt / div[i]);
+      vels[j] = (CelestialBody::bodies[j]->getVelocity() + KVcurr[j] * dt / div[i]);
+      mass[j] = (CelestialBody::bodies[j]->getMass());
     }
 
-    CelestialBody::getK(poss, mass, KVcurr);
+    CelestialBody::getK(poss, vels, mass, KRcurr, KVcurr);
 
-    KR[i] = vels;
+    KR[i] = KRcurr;
     KV[i] = KVcurr;
   }
 
@@ -207,82 +203,104 @@ void CelestialBody::RK4_step(float dt)
       tempR += KR[j][i] * div[j];
       tempV += KV[j][i] * div[j];
     }
-    
-    CelestialBody::bodies[i]->addPosition(-((float)1 / (float)6) * tempR * dt); // need to figure out how to do withouth this matrix multiplication
+
+    CelestialBody::bodies[i]->addPosition(-((float)1 / (float)6) * tempR * dt);
     CelestialBody::bodies[i]->addVelocity(-((float)1 / (float)6) * tempV * dt);
   }
 }
 
-void CelestialBody::display(mat4 ProjectionMatrix, mat4 ViewMatrix, vec3 lightPos)
+void CelestialBody::cameraFollow(int body)
 {
-  glUseProgram(CelestialBodyID);
-  // Update the uniform
-  glUniform3f(LightIDCelestialBody, lightPos.x, lightPos.y, lightPos.z);
-  glUniformMatrix4fv(ViewMatrixIDCelestialBody, 1, GL_FALSE, &ViewMatrix[0][0]); // This one doesn't change between objects, so this can be done once for all objects that use "CelestialBodyID"
+  if(body < CelestialBody::bodies.size()) CelestialBody::follow = body;
+  else CelestialBody::follow = -1;
+}
 
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glEnableVertexAttribArray(2);
+void CelestialBody::cameraStopFollowing()
+{
+  CelestialBody::follow = -1;
+}
 
-  glBindBuffer(GL_ARRAY_BUFFER, vertexBufferCelestialBody);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+void CelestialBody::display(vec3 lightPos)
+{
+  // Compute the MVP matrix from keyboard and mouse input
+  computeMatricesFromInputs();
+  mat4 ProjectionMatrix = getProjectionMatrix();
+  mat4 ViewMatrix = getViewMatrix();
 
-  glBindBuffer(GL_ARRAY_BUFFER, uvBufferCelestialBody);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-  glBindBuffer(GL_ARRAY_BUFFER, normalBufferCelestialBody);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-  // Determine position
-  mat4 ModelMatrix = mat4(1.0);
-
-  // should make a matrix for each element maybe
-  ModelMatrix = translate(ModelMatrix, getPosition());
-  ModelMatrix = scale(ModelMatrix, vec3(radius, radius, radius));  // or different scale values
-  // ModelMatrix = rotate(ModelMatrix, (angleSeparation * i), vec3(0,1,0));
-  mat4 MVP1 = ProjectionMatrix * ViewMatrix * ModelMatrix;
-  
-  // Send our transformation to the currently bound shader, 
-  // in the "MVP" uniform
-  glUniformMatrix4fv(MatrixIDCelestialBody, 1, GL_FALSE, &MVP1[0][0]);
-  glUniformMatrix4fv(ModelMatrixIDCelestialBody, 1, GL_FALSE, &ModelMatrix[0][0]);
-  glUniform3f(colorIDCelestialBody, getColor().x, getColor().y, getColor().z);
-
-  // Draw the triangles !
-  glDrawElements(GL_TRIANGLES, numVertices, GL_UNSIGNED_SHORT, (void*)0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glDisableVertexAttribArray(2);
-  
-  if(true)
+  if(CelestialBody::follow > -1)
   {
-    // // I think I need to add this to each body?
-    glUseProgram(trailingTailID);
+    ViewMatrix = translate(ViewMatrix, -(CelestialBody::bodies[CelestialBody::follow]->getPosition()));
+  }
 
-    // glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
-
-    mat4 thing = ProjectionMatrix * ViewMatrix;
-    
-    glUniformMatrix4fv(MatrixIDTrailingTail, 1, GL_FALSE, &thing[0][0]);
-
-    trailPoints.push_back(getPosition());
-
-    if (trailPoints.size() > CelestialBody::MAX_TRAIL_POINTS) 
-    {
-      trailPoints.erase(trailPoints.begin());
-    }
+  for(auto& el : CelestialBody::bodies)
+  {
+    glUseProgram(el->CelestialBodyID);
+    // Update the uniforms
+    glUniform3f(el->LightIDCelestialBody, lightPos.x, lightPos.y, lightPos.z);
+    glUniformMatrix4fv(el->ViewMatrixIDCelestialBody, 1, GL_FALSE, &ViewMatrix[0][0]); // This one doesn't change between objects, so this can be done once for all objects that use "el->el->CelestialBodyID"
 
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
-    glBufferData(GL_ARRAY_BUFFER, trailPoints.size() * sizeof(vec3), trailPoints.data(), GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
-    // Set line width if desired
-    glLineWidth(2.0f);
-    // Set color
-    glUniform4f(trailingTrailColorID, getColor().x, getColor().y, getColor().z, 1.0f); // Red trail
+    glBindBuffer(GL_ARRAY_BUFFER, el->vertexBufferCelestialBody);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-    glDrawArrays(GL_LINE_STRIP, 0, trailPoints.size());
+    glBindBuffer(GL_ARRAY_BUFFER, el->uvBufferCelestialBody);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, el->normalBufferCelestialBody);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    // Determine position
+    mat4 ModelMatrix = mat4(1.0);
+    ModelMatrix = translate(ModelMatrix, el->getPosition());
+    ModelMatrix = scale(ModelMatrix, vec3(el->radius, el->radius, el->radius));
+    // ModelMatrix = rotate(ModelMatrix, (angleSeparation * i), vec3(0,1,0));
+    mat4 MVP1 = ProjectionMatrix * ViewMatrix * ModelMatrix;
+    
+    // Send our transformation to the currently bound shader, 
+    // in the "MVP" uniform
+    glUniformMatrix4fv(el->MatrixIDCelestialBody, 1, GL_FALSE, &MVP1[0][0]);
+    glUniformMatrix4fv(el->ModelMatrixIDCelestialBody, 1, GL_FALSE, &ModelMatrix[0][0]);
+    glUniform3f(el->colorIDCelestialBody, el->getColor().x, el->getColor().y, el->getColor().z);
+
+    // Draw the triangles !
+    glDrawElements(GL_TRIANGLES, el->numVertices, GL_UNSIGNED_SHORT, (void*)0);
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    
+    if(el->displayTrail)
+    {
+      // // I think I need to add this to each body?
+      glUseProgram(el->trailingTailID);
+
+      // glBindBuffer(GL_ARRAY_BUFFER, trailingTailBufferData);
+
+      mat4 thing = ProjectionMatrix * ViewMatrix;
+      
+      glUniformMatrix4fv(el->MatrixIDTrailingTail, 1, GL_FALSE, &thing[0][0]);
+
+      el->trailPoints.push_back(el->getPosition());
+
+      if (el->trailPoints.size() > CelestialBody::MAX_TRAIL_POINTS) 
+      {
+        el->trailPoints.erase(el->trailPoints.begin());
+      }
+
+      glEnableVertexAttribArray(0);
+      glBindBuffer(GL_ARRAY_BUFFER, el->trailingTailBufferData);
+      glBufferData(GL_ARRAY_BUFFER, el->trailPoints.size() * sizeof(vec3), el->trailPoints.data(), GL_DYNAMIC_DRAW);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+
+      // Set line width if desired
+      glLineWidth(2.0f);
+      // Set color
+      glUniform4f(el->trailingTrailColorID, el->getColor().x, el->getColor().y, el->getColor().z, 1.0f); // Red trail
+
+      glDrawArrays(GL_LINE_STRIP, 0, el->trailPoints.size());
+      glDisableVertexAttribArray(0);
+    }
   }
 }
