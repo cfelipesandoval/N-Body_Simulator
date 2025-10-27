@@ -18,6 +18,8 @@ class CelestialBody
 {
 public:
   static void RK4_step(float dt);
+  static void RK10_step(float dt);
+  static void RK14_step(float dt);
   static void cameraFollow(int body);
   static void cameraStopFollowing();
   static void display(vec3 lightPos);
@@ -47,7 +49,10 @@ public:
   void setRadius(float);
 
 private:
-  static void getK(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static void RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static void RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static void RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+
   // Variables for displaying
   static int follow;
 

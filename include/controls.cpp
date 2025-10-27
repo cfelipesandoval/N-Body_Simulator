@@ -72,6 +72,7 @@ void computeMatricesFromInputs()
 	float x,y,z;
 
 	// Make sure camera does not go over theta limits (-90, 90)
+	if(radius < 0.15)radius = 0.15;
 	if(theta > radians(90.0)) theta = radians(89.9);
 	if(theta < radians(-90.0)) theta = radians(-89.9);
 
