@@ -373,8 +373,8 @@ void CelestialBody::RK14_step(float dt)
       tempV += KV[j][i] * ck[j];
     }
 
-    CelestialBody::bodies[i]->addPosition(-tempR * dt);
-    CelestialBody::bodies[i]->addVelocity(-tempV * dt);
+    CelestialBody::bodies[i]->addPosition(tempR * dt);
+    CelestialBody::bodies[i]->addVelocity(tempV * dt);
   }
 }
 
@@ -485,8 +485,8 @@ void CelestialBody::RK10_step(float dt)
       tempV += KV[j][i] * ck[j];
     }
 
-    CelestialBody::bodies[i]->addPosition(-tempR * dt);
-    CelestialBody::bodies[i]->addVelocity(-tempV * dt);
+    CelestialBody::bodies[i]->addPosition(tempR * dt);
+    CelestialBody::bodies[i]->addVelocity(tempV * dt);
   }
 }
 
@@ -564,7 +564,7 @@ void CelestialBody::RK4_step(float dt)
       tempV += KV[j][i] * div[j];
     }
 
-    CelestialBody::bodies[i]->addPosition(-((float)1 / (float)6) * tempR * dt);
-    CelestialBody::bodies[i]->addVelocity(-((float)1 / (float)6) * tempV * dt);
+    CelestialBody::bodies[i]->addPosition(((float)1 / (float)6) * tempR * dt);
+    CelestialBody::bodies[i]->addVelocity(((float)1 / (float)6) * tempV * dt);
   }
 }
