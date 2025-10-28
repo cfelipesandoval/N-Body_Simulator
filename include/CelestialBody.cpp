@@ -262,7 +262,7 @@ void CelestialBody::RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<f
     KVcurr[i] = a;
   }
 }
-
+// Using values from http://sce.uhcl.edu/rungekutta/rk1412.txt
 void CelestialBody::RK14_step(float dt)
 {
   vector<vector<vec3>> KR(35, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
@@ -410,7 +410,7 @@ void CelestialBody::RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<f
     KVcurr[i] = a;
   }
 }
-
+// Using values from "A Tenth-Order Runge-Kutta Method with Error Estimate", T. Feagin 
 void CelestialBody::RK10_step(float dt)
 {
   vector<vector<vec3>> KR(17, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
@@ -566,5 +566,15 @@ void CelestialBody::RK4_step(float dt)
 
     CelestialBody::bodies[i]->addPosition(((float)1 / (float)6) * tempR * dt);
     CelestialBody::bodies[i]->addVelocity(((float)1 / (float)6) * tempV * dt);
+  }
+}
+
+CelestialBody::~CelestialBody()
+{
+  CelestialBody::bodies.erase(CelestialBody::bodies.begin() + bodyNum);
+
+  for(int i = bodyNum ; i < CelestialBody::bodies.size() ; i++)
+  {
+    CelestialBody::bodies[i]->bodyNum--;
   }
 }
