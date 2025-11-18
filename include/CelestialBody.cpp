@@ -4,7 +4,7 @@
 
 vector<CelestialBody*> CelestialBody::bodies;
 int CelestialBody::follow = -1;
-
+vector<vector<int>> (*CelestialBody::orderPtr)(float);
 
 float CelestialBody::G = 1;
 int CelestialBody::MAX_TRAIL_POINTS = 1000;
@@ -37,6 +37,8 @@ CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CB
   trailingTrailColorID = *trailBufferArray[2];
 
   glGenBuffers(1, &trailingTailBufferData);
+
+  orderPtr = &RK4_step;
 }
 
 void CelestialBody::addPosition(vec3 pos)
@@ -230,10 +232,12 @@ void CelestialBody::display(vec3 lightPos)
 }
 
 // need to figure out how to get better precision for calculations
-void CelestialBody::RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
+vector<vector<int>> CelestialBody::RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
 {
   vector<vec3> possCurr(poss.size(), vec3(0, 0, 0));
   vector<float> massCurr(mass.size());
+  vector<float> radsCurr(rads.size());
+  vector<vector<int>> remove;
 
   // auto startTime1 = chrono::high_resolution_clock::now();
   // auto endTime1 = chrono::high_resolution_clock::now();
@@ -249,27 +253,39 @@ void CelestialBody::RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<f
     massCurr = mass;
     massCurr.erase(massCurr.begin() + i);
 
+    radsCurr = rads;
+    radsCurr.erase(radsCurr.begin() + i);
+
     vec3 p = poss[i];
     vec3 a = vec3(0,0,0);
-    // cout << "here" << endl;
+
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
       float mag = length(p - possCurr[j]);
+      // if(mag <= (CelestialBody::bodies[i]->radius + CelestialBody::bodies[j]->radius))
+      // {
+      //   remove.push_back(vector(i,j));
+      // }
+
       a -= CelestialBody::G * massCurr[j] * ((p - possCurr[j]) / (mag * mag * mag));
     }
     
     KRcurr[i] = vels[i];
     KVcurr[i] = a;
   }
+
+  return remove;
 }
 // Using values from http://sce.uhcl.edu/rungekutta/rk1412.txt
-void CelestialBody::RK14_step(float dt)
+vector<vector<int>> CelestialBody::RK14_step(float dt)
 {
   vector<vector<vec3>> KR(35, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
   vector<vector<vec3>> KV(35, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
   
   vector<vec3> KRcurr(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<vec3> KVcurr(CelestialBody::bodies.size(), vec3(0,0,0));
+
+  vector<vector<int>> remove;
 
   vector<float> ak = {0.000000000000000000000000000000000000000000000000000000000000,
                       0.111111111111111111111111111111111111111111111111111111111111,
@@ -346,6 +362,7 @@ void CelestialBody::RK14_step(float dt)
   vector<vec3> poss(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<vec3> vels(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<float> mass(CelestialBody::bodies.size());
+  vector<float> rads(CelestialBody::bodies.size());
 
   for(int i = 0 ; i < 35 ; i++)
   {
@@ -354,9 +371,10 @@ void CelestialBody::RK14_step(float dt)
       poss[j] = (CelestialBody::bodies[j]->getPosition() + KRcurr[j] * dt * ak[i]);
       vels[j] = (CelestialBody::bodies[j]->getVelocity() + KVcurr[j] * dt * ak[i]);
       mass[j] = (CelestialBody::bodies[j]->getMass());
+      rads[j] = (CelestialBody::bodies[j]->getRadius());
     }
 
-    CelestialBody::RK14_helper(poss, vels, mass, KRcurr, KVcurr);
+    remove = CelestialBody::RK14_helper(poss, vels, mass, rads, KRcurr, KVcurr);
 
     KR[i] = KRcurr;
     KV[i] = KVcurr;
@@ -376,17 +394,21 @@ void CelestialBody::RK14_step(float dt)
     CelestialBody::bodies[i]->addPosition(tempR * dt);
     CelestialBody::bodies[i]->addVelocity(tempV * dt);
   }
+
+  return remove;
 }
 
-void CelestialBody::RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
+vector<vector<int>> CelestialBody::RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
 {
   vector<vec3> possCurr(poss.size(), vec3(0, 0, 0));
   vector<float> massCurr(mass.size());
+  vector<float> radsCurr(rads.size());
+  vector<vector<int>> remove;
 
   // auto startTime1 = chrono::high_resolution_clock::now();
   // auto endTime1 = chrono::high_resolution_clock::now();
   // cout << "Time 1 taken: " << (endTime1 - startTime1).count() << endl;
-  
+
   // #pragma omp parallel for collapse(2)
   for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
   {
@@ -397,27 +419,43 @@ void CelestialBody::RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<f
     massCurr = mass;
     massCurr.erase(massCurr.begin() + i);
 
+    radsCurr = rads;
+    radsCurr.erase(radsCurr.begin() + i);
+
     vec3 p = poss[i];
     vec3 a = vec3(0,0,0);
-    // cout << "here" << endl;
+    float rad = CelestialBody::bodies[i]->radius;
+
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
       float mag = length(p - possCurr[j]);
+
+      if(mag <= (std::min(rad, radsCurr[j])))
+      {
+        int add = (i <= j) && (j < radsCurr.size()) ? 1 : 0;
+        vector temp = {i, j + add};
+        remove.push_back(temp);
+      }
+
       a -= CelestialBody::G * massCurr[j] * ((p - possCurr[j]) / (mag * mag * mag));
     }
     
     KRcurr[i] = vels[i];
     KVcurr[i] = a;
   }
+
+  return remove;
 }
 // Using values from "A Tenth-Order Runge-Kutta Method with Error Estimate", T. Feagin 
-void CelestialBody::RK10_step(float dt)
+vector<vector<int>> CelestialBody::RK10_step(float dt)
 {
   vector<vector<vec3>> KR(17, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
   vector<vector<vec3>> KV(17, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
   
   vector<vec3> KRcurr(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<vec3> KVcurr(CelestialBody::bodies.size(), vec3(0,0,0));
+
+  vector<vector<int>> remove;
 
   vector<float> ak = {0.000000000000000000000000000000000000000000000000000000000000,
                       0.100000000000000000000000000000000000000000000000000000000000,
@@ -458,6 +496,7 @@ void CelestialBody::RK10_step(float dt)
   vector<vec3> poss(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<vec3> vels(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<float> mass(CelestialBody::bodies.size());
+  vector<float> rads(CelestialBody::bodies.size());
 
   for(int i = 0 ; i < 17 ; i++)
   {
@@ -466,9 +505,10 @@ void CelestialBody::RK10_step(float dt)
       poss[j] = (CelestialBody::bodies[j]->getPosition() + KRcurr[j] * dt * ak[i]);
       vels[j] = (CelestialBody::bodies[j]->getVelocity() + KVcurr[j] * dt * ak[i]);
       mass[j] = (CelestialBody::bodies[j]->getMass());
+      rads[j] = (CelestialBody::bodies[j]->getRadius());
     }
 
-    CelestialBody::RK10_helper(poss, vels, mass, KRcurr, KVcurr);
+    remove = CelestialBody::RK10_helper(poss, vels, mass, rads, KRcurr, KVcurr);
 
     KR[i] = KRcurr;
     KV[i] = KVcurr;
@@ -488,12 +528,16 @@ void CelestialBody::RK10_step(float dt)
     CelestialBody::bodies[i]->addPosition(tempR * dt);
     CelestialBody::bodies[i]->addVelocity(tempV * dt);
   }
+
+  return remove;
 }
 
-void CelestialBody::RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
+vector<vector<int>> CelestialBody::RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
 {
   vector<vec3> possCurr(poss.size(), vec3(0, 0, 0));
   vector<float> massCurr(mass.size());
+  vector<float> radsCurr(rads.size());
+  vector<vector<int>> remove;
 
   // auto startTime1 = chrono::high_resolution_clock::now();
   // auto endTime1 = chrono::high_resolution_clock::now();
@@ -509,21 +553,30 @@ void CelestialBody::RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<fl
     massCurr = mass;
     massCurr.erase(massCurr.begin() + i);
 
+    radsCurr = rads;
+    radsCurr.erase(radsCurr.begin() + i);
+
     vec3 p = poss[i];
     vec3 a = vec3(0,0,0);
     // cout << "here" << endl;
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
       float mag = length(p - possCurr[j]);
+      if(mag <= (CelestialBody::bodies[i]->radius + CelestialBody::bodies[j]->radius))
+      {
+        // remove.push_back(vector(i,j));
+      }
       a -= CelestialBody::G * massCurr[j] * ((p - possCurr[j]) / (mag * mag * mag));
     }
     
     KRcurr[i] = vels[i];
     KVcurr[i] = a;
   }
+
+  return remove;
 }
 
-void CelestialBody::RK4_step(float dt)
+vector<vector<int>> CelestialBody::RK4_step(float dt)
 {
   vector<vector<vec3>> KR(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
   vector<vector<vec3>> KV(4, vector<vec3>(CelestialBody::bodies.size(), vec3(0,0,0)));
@@ -532,11 +585,12 @@ void CelestialBody::RK4_step(float dt)
   vector<vec3> KVcurr(CelestialBody::bodies.size(), vec3(0,0,0));
 
   vector<float> div = {1, 2, 2, 1};
-  // vec<4,float> div = {1, 2, 2, 1};
+  vector<vector<int>> remove;
 
   vector<vec3> poss(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<vec3> vels(CelestialBody::bodies.size(), vec3(0,0,0));
   vector<float> mass(CelestialBody::bodies.size());
+  vector<float> rads(CelestialBody::bodies.size());
 
   for(int i = 0 ; i < 4 ; i++)
   {
@@ -545,9 +599,10 @@ void CelestialBody::RK4_step(float dt)
       poss[j] = (CelestialBody::bodies[j]->getPosition() + KRcurr[j] * dt / div[i]);
       vels[j] = (CelestialBody::bodies[j]->getVelocity() + KVcurr[j] * dt / div[i]);
       mass[j] = (CelestialBody::bodies[j]->getMass());
+      rads[j] = (CelestialBody::bodies[j]->getRadius());
     }
 
-    CelestialBody::RK4_helper(poss, vels, mass, KRcurr, KVcurr);
+    remove = CelestialBody::RK4_helper(poss, vels, mass, rads, KRcurr, KVcurr);
 
     KR[i] = KRcurr;
     KV[i] = KVcurr;
@@ -567,7 +622,64 @@ void CelestialBody::RK4_step(float dt)
     CelestialBody::bodies[i]->addPosition(((float)1 / (float)6) * tempR * dt);
     CelestialBody::bodies[i]->addVelocity(((float)1 / (float)6) * tempV * dt);
   }
+  
+  return remove;
 }
+
+void CelestialBody::update(float dt)
+{
+  vector<vector<int>> remove = (*CelestialBody::orderPtr)(dt);
+
+  if(remove.size())
+  {
+    cout << "new" << endl;
+    // make sure you can combine more than one at once?
+
+    vector<vector<int>> rems;
+    for(auto& rem : remove)
+    {
+      sort(rem.begin(), rem.end());
+    }
+
+    remove.erase(std::unique(remove.begin(), remove.end()), remove.end());
+
+    combineBodies(remove);
+  }
+}
+
+void CelestialBody::combineBodies(vector<vector<int>> combine)
+{
+  vector<int> rem;
+  for(auto& com : combine)
+  {
+    // need to figure out how to reindex the com vector after an index has been deleted from bodies vector
+    vec3 col = (CelestialBody::bodies[com[0]]->getColor() + CelestialBody::bodies[com[1]]->getColor()) * 0.5f;
+    vec3 pos = (CelestialBody::bodies[com[0]]->getPosition() + CelestialBody::bodies[com[1]]->getPosition()) * 0.5f;
+    float m = CelestialBody::bodies[com[0]]->getMass() + CelestialBody::bodies[com[1]]->getMass();
+    vec3 vel = (CelestialBody::bodies[com[0]]->getVelocity() * CelestialBody::bodies[com[0]]->getMass() + CelestialBody::bodies[com[1]]->getVelocity() * CelestialBody::bodies[com[1]]->getMass()) / m;
+    cout << "hjere" << endl;
+    CelestialBody::bodies[com[1]]->~CelestialBody();
+    cout << "hjere222222" << endl;
+
+    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setPosition(pos);
+    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setVelocity(vel);
+    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setColor(col);
+    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setMass(m);   
+  }
+  
+}
+
+void CelestialBody::setOrder(int order)
+{
+  switch(order)
+  {
+    case 4: orderPtr = &RK4_step; break;
+    case 10: orderPtr = &RK10_step; break;
+    case 14: orderPtr = &RK14_step; break;
+    default: cerr << "Error, Order must be 4, 10 or 14" << endl;
+  }
+}
+
 
 CelestialBody::~CelestialBody()
 {

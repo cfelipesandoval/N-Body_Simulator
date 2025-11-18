@@ -5,8 +5,7 @@
 #include <omp.h>
 #include <iostream>
 #include <chrono>
-
-
+#include <set>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -24,21 +23,21 @@ public:
    * 
    * @param dt Time step
    */
-  static void RK4_step(float dt);
+  static vector<vector<int>> RK4_step(float dt);
 
   /**
    * @brief Take a step using the Runge-Kutta Tenth Order Algorithm
    * 
    * @param dt Time step
    */
-  static void RK10_step(float dt);
+  static vector<vector<int>> RK10_step(float dt);
 
   /**
    * @brief Take a step using the Runge-Kutta Fourteenth Order Algorithm
    * 
    * @param dt Time step
    */
-  static void RK14_step(float dt);
+  static vector<vector<int>> RK14_step(float dt);
 
   /**
    * @brief Set camera to follow a specific body
@@ -179,11 +178,15 @@ public:
    */
   void setRadius(float r);
 
-private:
-  static void RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
-  static void RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
-  static void RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static void update(float dt);
 
+  static void setOrder(int order);
+
+private:
+  static vector<vector<int>> RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads,  vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static vector<vector<int>> RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads,  vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static vector<vector<int>> RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads,  vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  static void combineBodies(vector<vector<int>> combine);
   // Variables for displaying
   static int follow;
 
@@ -200,6 +203,7 @@ private:
   float radius = 0.5;
   int numVertices = 0;
   int bodyNum;
+  static vector<vector<int>> (*orderPtr)(float);
   
   // Trail Variables
   bool displayTrail = true;
