@@ -41,12 +41,12 @@ void computeMatricesFromInputs()
 
 	// Move closer to the origin
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
-		radius -= 5 * speed * deltaTime;
+		radius -= 50 * speed * deltaTime;
 	}
 	// Move farther from the origin
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS)
 	{
-		radius += 5 * speed * deltaTime;
+		radius += 50 * speed * deltaTime;
 	}
 	// Rotate left
 	if (glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS)

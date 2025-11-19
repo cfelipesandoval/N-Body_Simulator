@@ -13,6 +13,8 @@
 using namespace glm;
 using namespace std;
 
+static float MAX_DISTANCE = 2000.0f;
+
 class CelestialBody
 {
 public:
@@ -46,6 +48,8 @@ public:
    */
   static void cameraFollow(int body);
 
+  static vec3 getCOM();
+
   /**
    * @brief Disable camera following
    * 
@@ -57,7 +61,7 @@ public:
    * 
    * @param lightPos 
    */
-  static void display(vec3 lightPos);
+  static void display(vec3 lightPos = vec3(0,0,0));
 
   static vector<CelestialBody*> bodies; // Vector containing all active bodies
   static float G; // Gravitational constant

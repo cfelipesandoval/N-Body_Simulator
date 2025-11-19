@@ -14,6 +14,7 @@
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
 using namespace glm;
 
 #include <include/shader.hpp>

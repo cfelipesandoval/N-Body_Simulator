@@ -3,7 +3,7 @@
 #include <iostream>
 
 vector<CelestialBody*> CelestialBody::bodies;
-int CelestialBody::follow = -1;
+int CelestialBody::follow = -2;
 vector<vector<int>> (*CelestialBody::orderPtr)(float);
 
 float CelestialBody::G = 1;
@@ -134,11 +134,25 @@ void CelestialBody::disableAllTrails()
   }
 }
 
-
 void CelestialBody::cameraFollow(int body)
 {
-  if(body < CelestialBody::bodies.size()) CelestialBody::follow = body;
-  else CelestialBody::follow = -1;
+  if(body < CelestialBody::bodies.size() && body > -1) CelestialBody::follow = body;
+  else if(body == -1) CelestialBody::follow = -1;
+  else CelestialBody::follow = -2;
+}
+
+vec3 CelestialBody::getCOM()
+{
+  vec3 pos(0,0,0);
+  float m = 0;
+
+  for(auto& b : CelestialBody::bodies)
+  {
+    pos += b->getPosition() * b->getMass();
+    m += b->getMass();
+  }
+
+  return pos / m;
 }
 
 void CelestialBody::cameraStopFollowing()
@@ -157,9 +171,21 @@ void CelestialBody::display(vec3 lightPos)
   {
     ViewMatrix = translate(ViewMatrix, -(CelestialBody::bodies[CelestialBody::follow]->getPosition()));
   }
+  else if(CelestialBody::follow == -1)
+  {
+    ViewMatrix = translate(ViewMatrix, -(CelestialBody::getCOM()));
+    lightPos = CelestialBody::getCOM() + vec3(0,25,0);
+  }
 
+  
   for(auto& el : CelestialBody::bodies)
   {
+    if(length(el->getPosition()) > (MAX_DISTANCE + length(CelestialBody::getCOM()))) 
+    {
+      el->~CelestialBody();
+      continue;
+    }
+
     glUseProgram(el->CelestialBodyID);
     // Update the uniforms
     glUniform3f(el->LightIDCelestialBody, lightPos.x, lightPos.y, lightPos.z);
@@ -258,14 +284,18 @@ vector<vector<int>> CelestialBody::RK14_helper(vector<vec3> &poss, vector<vec3> 
 
     vec3 p = poss[i];
     vec3 a = vec3(0,0,0);
+    float r = CelestialBody::bodies[i]->radius;
 
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
       float mag = length(p - possCurr[j]);
-      // if(mag <= (CelestialBody::bodies[i]->radius + CelestialBody::bodies[j]->radius))
-      // {
-      //   remove.push_back(vector(i,j));
-      // }
+      
+      if(mag <= (r + radsCurr[j]))
+      {
+        int add = (i <= j) && (j < radsCurr.size()) ? 1 : 0;
+        vector temp = {i, j + add};
+        remove.push_back(temp);
+      }
 
       a -= CelestialBody::G * massCurr[j] * ((p - possCurr[j]) / (mag * mag * mag));
     }
@@ -409,7 +439,7 @@ vector<vector<int>> CelestialBody::RK10_helper(vector<vec3> &poss, vector<vec3> 
   // auto endTime1 = chrono::high_resolution_clock::now();
   // cout << "Time 1 taken: " << (endTime1 - startTime1).count() << endl;
 
-  // #pragma omp parallel for collapse(2)
+  // #pragma omp parallel for
   for(int i = 0 ; i < CelestialBody::bodies.size() ; i++)
   {
     // Copy and remove contribution from itself
@@ -424,13 +454,12 @@ vector<vector<int>> CelestialBody::RK10_helper(vector<vec3> &poss, vector<vec3> 
 
     vec3 p = poss[i];
     vec3 a = vec3(0,0,0);
-    float rad = CelestialBody::bodies[i]->radius;
-
+    float r = CelestialBody::bodies[i]->radius;
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
       float mag = length(p - possCurr[j]);
 
-      if(mag <= (std::min(rad, radsCurr[j])))
+      if(mag <= (r + radsCurr[j]))
       {
         int add = (i <= j) && (j < radsCurr.size()) ? 1 : 0;
         vector temp = {i, j + add};
@@ -558,14 +587,19 @@ vector<vector<int>> CelestialBody::RK4_helper(vector<vec3> &poss, vector<vec3> &
 
     vec3 p = poss[i];
     vec3 a = vec3(0,0,0);
-    // cout << "here" << endl;
+    float r = CelestialBody::bodies[i]->radius;
+
     for(int j = 0 ; j < possCurr.size() ; j++)
     {
       float mag = length(p - possCurr[j]);
-      if(mag <= (CelestialBody::bodies[i]->radius + CelestialBody::bodies[j]->radius))
+
+      if(mag <= (r + radsCurr[j]))
       {
-        // remove.push_back(vector(i,j));
+        int add = (i <= j) && (j < radsCurr.size()) ? 1 : 0;
+        vector temp = {i, j + add};
+        remove.push_back(temp);
       }
+
       a -= CelestialBody::G * massCurr[j] * ((p - possCurr[j]) / (mag * mag * mag));
     }
     
@@ -632,14 +666,13 @@ void CelestialBody::update(float dt)
 
   if(remove.size())
   {
-    cout << "new" << endl;
-    // make sure you can combine more than one at once?
-
     vector<vector<int>> rems;
     for(auto& rem : remove)
     {
       sort(rem.begin(), rem.end());
     }
+
+    sort(remove.begin(), remove.end());
 
     remove.erase(std::unique(remove.begin(), remove.end()), remove.end());
 
@@ -647,26 +680,42 @@ void CelestialBody::update(float dt)
   }
 }
 
+void printVector(vec3 p)
+{
+  cout << p.x << ", " << p.y << ", " << p.z << ", " << endl;
+}
+
 void CelestialBody::combineBodies(vector<vector<int>> combine)
 {
-  vector<int> rem;
+  vector<CelestialBody*> rem;
+  
+  combine.erase(std::unique(combine.begin(), combine.end()), combine.end());
+  
   for(auto& com : combine)
   {
     // need to figure out how to reindex the com vector after an index has been deleted from bodies vector
-    vec3 col = (CelestialBody::bodies[com[0]]->getColor() + CelestialBody::bodies[com[1]]->getColor()) * 0.5f;
-    vec3 pos = (CelestialBody::bodies[com[0]]->getPosition() + CelestialBody::bodies[com[1]]->getPosition()) * 0.5f;
     float m = CelestialBody::bodies[com[0]]->getMass() + CelestialBody::bodies[com[1]]->getMass();
+    vec3 col = (CelestialBody::bodies[com[0]]->getColor() * CelestialBody::bodies[com[0]]->getMass() / m
+              + CelestialBody::bodies[com[1]]->getColor() * CelestialBody::bodies[com[1]]->getMass() / m);
+    vec3 pos = (CelestialBody::bodies[com[0]]->getPosition() + CelestialBody::bodies[com[1]]->getPosition()) * 0.5f;
     vec3 vel = (CelestialBody::bodies[com[0]]->getVelocity() * CelestialBody::bodies[com[0]]->getMass() + CelestialBody::bodies[com[1]]->getVelocity() * CelestialBody::bodies[com[1]]->getMass()) / m;
-    cout << "hjere" << endl;
-    CelestialBody::bodies[com[1]]->~CelestialBody();
-    cout << "hjere222222" << endl;
 
-    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setPosition(pos);
-    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setVelocity(vel);
-    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setColor(col);
-    CelestialBody::bodies[CelestialBody::bodies[com[0]]->getBodyNum()]->setMass(m);   
+    CelestialBody::bodies[com[0]]->setPosition(pos);
+    CelestialBody::bodies[com[0]]->setVelocity(vel);
+    CelestialBody::bodies[com[0]]->setColor(col);
+    CelestialBody::bodies[com[0]]->setMass(m);
+    CelestialBody::bodies[com[0]]->setRadius(cbrt(pow(CelestialBody::bodies[com[0]]->getRadius(), 3) + pow(CelestialBody::bodies[com[1]]->getRadius(), 3)));
+
+    rem.push_back(CelestialBody::bodies[com[1]]);
   }
-  
+
+  rem.erase(std::unique(rem.begin(), rem.end()), rem.end());
+
+
+  for(auto& r : rem)
+  {
+    r->~CelestialBody();
+  }
 }
 
 void CelestialBody::setOrder(int order)
@@ -684,7 +733,7 @@ void CelestialBody::setOrder(int order)
 CelestialBody::~CelestialBody()
 {
   CelestialBody::bodies.erase(CelestialBody::bodies.begin() + bodyNum);
-
+  
   for(int i = bodyNum ; i < CelestialBody::bodies.size() ; i++)
   {
     CelestialBody::bodies[i]->bodyNum--;
