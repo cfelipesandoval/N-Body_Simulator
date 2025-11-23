@@ -23,6 +23,11 @@ On subsequent builds, you only need to run
 ```console
 cmake --build . && ./launch-n_body_simulator.cmd
 ```
+Note, if on linux, you may have to potentially run
+
+```console
+./launch-n_body_simulator.sh
+```
 
 ## Using the Tool
 ### Creating Instances
