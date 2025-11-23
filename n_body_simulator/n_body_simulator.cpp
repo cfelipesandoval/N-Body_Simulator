@@ -8,8 +8,8 @@
 
 GLFWwindow* window;
 
-const int windowWidth = 1331;
-const int windowHeight = 998;
+const int windowWidth = 1024;
+const int windowHeight = 768;
 
 int main(int argc, char ** argv)
 {
