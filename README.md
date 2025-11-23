@@ -30,6 +30,17 @@ Note, if on linux, you may have to potentially run
 ```
 
 ## Using the Tool
+### Creating window
+Before initializing the simulation, the OpenGL window and shaders must be initialized, which can be done by running
+
+```cpp
+// Initialize Window and Shaders
+if(initWindow(width, height)) return -1; // Or just initWindow() for defualts
+
+// Initialize Shaders
+if(initShaders()) return -1;
+```
+
 ### Creating Instances
 Each body is created as an instance of the class CelestialBody, which can be initialized as
 ```cpp

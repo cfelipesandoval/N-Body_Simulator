@@ -19,8 +19,6 @@
 #include <glm/gtc/random.hpp>
 using namespace glm;
 
-
-
 #include <iostream>
 using namespace std;
 
@@ -52,7 +50,7 @@ static GLuint trailingTrailColorID;
 static bool showTrail = true;
 static int follow;
 
-int initWindow();
+int initWindow(int width = 1331, int height = 998);
 int initShaders();
 void cleanUp();
 
