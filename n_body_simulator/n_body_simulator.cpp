@@ -16,23 +16,20 @@ int main(void)
   // Initialize Shaders
   if(initShaders()) return -1;
 
-  srand(time(0));
+  srand(time(0)); // Initialize random seed
 
   // // Predefined Body Initializations
-  // twoBody();
-  // orbitingFig8();
-  // fig8();
-  // randomBodies(200);
   solarSystem();
+  // randomBodies(200);
+  // twoBody();
+  // fig8();
+  // orbitingFig8();
 
   CelestialBody::setOrder(10);
   // CelestialBody::MAX_TRAIL_POINTS = 1000;
 
   do
   {
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     // Update Bodies
     CelestialBody::update();
     // Display Bodies
@@ -40,11 +37,7 @@ int main(void)
 
     // // Handle user input
     handleUserInput();
-    handleSpawnRandom(15, 10, 3, 1e-9, 1e-10); // Press Enter Key
-    
-    // Swap buffers
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+    handleSpawnRandom(15, 5, 3, 1e-9, 1e-10); // Press Enter Key
 
   } while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0); // Check if the ESC key was pressed or the window was closed
 

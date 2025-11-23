@@ -172,9 +172,9 @@ int initShaders()
   CBBufferArray.push_back(&normalBufferCelestialBody); 
   CBBufferArray.push_back(&elementBufferCelestialBody);
   
-  trailBufferArray.push_back(&trailingTailID); 
-  trailBufferArray.push_back(&MatrixIDTrailingTail); 
-  trailBufferArray.push_back(&trailingTrailColorID);
+  CBTrailBufferArray.push_back(&trailingTailID); 
+  CBTrailBufferArray.push_back(&MatrixIDTrailingTail); 
+  CBTrailBufferArray.push_back(&trailingTrailColorID);
 
   vertNum = indices.size();
 
@@ -229,7 +229,7 @@ void handleSpawnRandom(int bodies, float maxRad, float maxVel, float meanMass, f
     {
       float m = abs(gaussRand(meanMass, stdMass));
       vec3 pos = CelestialBody::getBodyFollow();
-      new CelestialBody(ballRand(maxRad) + pos, ballRand(maxVel), ballRand(1.0f), m, CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+      new CelestialBody(ballRand(maxRad) + pos, ballRand(maxVel), ballRand(1.0f), m);
       CelestialBody::bodies[CelestialBody::bodies.size() - 1]->setRadius(m * 0.2f);    
     }
   }
@@ -286,21 +286,21 @@ void handleUserInput()
   // Update frames skipped
   if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // Increase skips
   {
-    CelestialBody::skipFrames += 5;
+    CelestialBody::setSkipFrames(CelestialBody::getSkipFrames() + 5);
   }
   if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // Decrease skips
   {
-    CelestialBody::skipFrames -= 5;
-    if(CelestialBody::skipFrames <= 0) 
+    CelestialBody::setSkipFrames(CelestialBody::getSkipFrames() - 5);
+    if(CelestialBody::getSkipFrames() <= 0) 
     {
-      CelestialBody::skipFrames = 5;
+      CelestialBody::setSkipFrames(5);
     }
   }
   
   // Pause (Don't update)
   if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) 
   {
-    CelestialBody::skipFrames = 0;
+    CelestialBody::setSkipFrames(0);
   }
 }
 
@@ -316,7 +316,7 @@ void solarSystem()
   CelestialBody::MAX_TRAIL_POINTS = 1000;
   follow = 0;
   CelestialBody::cameraFollow(follow);
-  CelestialBody::timeStep = 0.00003;
+  CelestialBody::setTimeStep(0.00003);
 
   //// Initializing Initial Conditions
   float G = 4 * pi<float>() * pi<float>();
@@ -407,12 +407,22 @@ void solarSystem()
 
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i], CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(rads[i]);
   }
   v = sqrt(G * M3 / (0.0026));
-  new CelestialBody(positions[3] + vec3(0.0026,0,0), velocities[3] + vec3(0,0,v), colors[3], 3.69e-8, CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+  new CelestialBody(positions[3] + vec3(0.0026,0,0), velocities[3] + vec3(0,0,v), colors[3], 3.69e-8);
   CelestialBody::bodies[masses.size()]->setRadius(0.0001);
+
+
+  for(int i = 0 ; i < 15 ; i++)
+  {
+    float m = abs(gaussRand(1e-9, 1e-10));
+    vec3 pos = CelestialBody::getBodyFollow();
+    new CelestialBody(ballRand(5.0f) + pos, ballRand(3.0f), ballRand(1.0f), m);
+    CelestialBody::bodies[CelestialBody::bodies.size() - 1]->setRadius(m * 0.2f);    
+  }
+
 }
 
 /**
@@ -424,12 +434,12 @@ void randomBodies(int numBodies)
 {
   CelestialBody::MAX_TRAIL_POINTS = 1000;
   CelestialBody::cameraFollow(-1);
-  CelestialBody::timeStep = 0.01;
+  CelestialBody::setTimeStep(0.01);
   // Spawn random bodies
   for(int i = 0 ; i < numBodies ; i++)
   {
     float m = abs(gaussRand(2.0f, 1.0f));
-    new CelestialBody(ballRand(80.0f), ballRand(1.0f), ballRand(1.0f), m, CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+    new CelestialBody(ballRand(80.0f), ballRand(1.0f), ballRand(1.0f), m);
     
     CelestialBody::bodies[i]->setRadius(m * 0.2f);
   }
@@ -442,7 +452,7 @@ void randomBodies(int numBodies)
 void orbitingFig8()
 {
   CelestialBody::MAX_TRAIL_POINTS = 1000;
-  CelestialBody::timeStep = 0.001;
+  CelestialBody::setTimeStep(0.001);
 
   float G = 1;
   CelestialBody::G = G;
@@ -532,7 +542,7 @@ void orbitingFig8()
 
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i], CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(0.125);
   }
 }
@@ -544,7 +554,7 @@ void orbitingFig8()
 void fig8()
 {
   CelestialBody::MAX_TRAIL_POINTS = 1000;
-  CelestialBody::timeStep = 0.001;
+  CelestialBody::setTimeStep(0.001);
 
   float G = 1;
   CelestialBody::G = G;
@@ -566,7 +576,7 @@ void fig8()
   // Initialize Bodies
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i], CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(0.125);
   }
 }
@@ -578,7 +588,7 @@ void fig8()
 void twoBody()
 {
   CelestialBody::MAX_TRAIL_POINTS = 1000;
-  CelestialBody::timeStep = 0.0001;
+  CelestialBody::setTimeStep(0.0001);
   double G = 4 * pi<double>() * pi<double>();
   CelestialBody::G = G;
   
@@ -618,7 +628,7 @@ void twoBody()
   // Initialize Bodies
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i], CBShaderHandleArray, CBBufferArray, trailBufferArray, vertNum);
+    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(0.125);
   }
 }

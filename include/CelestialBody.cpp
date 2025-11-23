@@ -31,7 +31,7 @@ int CelestialBody::skipFrames = 5;
 float CelestialBody::G = 1;
 int CelestialBody::MAX_TRAIL_POINTS = 100;
 
-CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size)
+CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray, vector<GLuint*> bufferArray, vector<GLuint*> trailBufferArray, int size)
 : position(p), velocity(v), color(c), mass(m), numVertices(size)
 {
   // Set body number
@@ -42,18 +42,18 @@ CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CB
   // Add to list containing all instances
   CelestialBody::bodies.push_back(this);
 
-  CelestialBodyID = *CBShaderHandleArray[0];  
-  MatrixIDCelestialBody = *CBShaderHandleArray[1];  
-  ViewMatrixIDCelestialBody = *CBShaderHandleArray[2];  
-  ModelMatrixIDCelestialBody = *CBShaderHandleArray[3];
-  colorIDCelestialBody = *CBShaderHandleArray[4];
-  isLightSourceIDCelestialBody = *CBShaderHandleArray[5];
-  LightIDCelestialBody = *CBShaderHandleArray[6];
+  CelestialBodyID = *shaderHandleArray[0];  
+  MatrixIDCelestialBody = *shaderHandleArray[1];  
+  ViewMatrixIDCelestialBody = *shaderHandleArray[2];  
+  ModelMatrixIDCelestialBody = *shaderHandleArray[3];
+  colorIDCelestialBody = *shaderHandleArray[4];
+  isLightSourceIDCelestialBody = *shaderHandleArray[5];
+  LightIDCelestialBody = *shaderHandleArray[6];
   
-  vertexBufferCelestialBody = *CBBufferArray[0]; 
-  uvBufferCelestialBody = *CBBufferArray[1]; 
-  normalBufferCelestialBody = *CBBufferArray[2]; 
-  elementBufferCelestialBody = *CBBufferArray[3];
+  vertexBufferCelestialBody = *bufferArray[0]; 
+  uvBufferCelestialBody = *bufferArray[1]; 
+  normalBufferCelestialBody = *bufferArray[2]; 
+  elementBufferCelestialBody = *bufferArray[3];
 
   trailingTailID = *trailBufferArray[0]; 
   MatrixIDTrailingTail = *trailBufferArray[1]; 
@@ -264,6 +264,9 @@ void CelestialBody::setAsLightSource()
 
 void CelestialBody::display(vec3 lightPos)
 {
+  // Clear the screen
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
   // Compute the MVP matrix from keyboard and mouse input
   computeMatricesFromInputs();
   mat4 ProjectionMatrix = getProjectionMatrix();
@@ -357,6 +360,10 @@ void CelestialBody::display(vec3 lightPos)
       glDisableVertexAttribArray(0);
     }
   }
+
+  // Swap buffers
+  glfwSwapBuffers(window);
+  glfwPollEvents();
 }
 
 
@@ -760,6 +767,27 @@ vector<vector<int>> CelestialBody::RK4_step(float dt)
   }
   
   return remove;
+}
+
+
+void CelestialBody::setTimeStep(float dt)
+{
+  CelestialBody::timeStep = dt;
+}
+
+void CelestialBody::setSkipFrames(int frames)
+{
+  CelestialBody::skipFrames = frames;
+}
+
+int CelestialBody::getSkipFrames()
+{
+  return CelestialBody::skipFrames;
+}
+
+float CelestialBody::getTimeStep()
+{
+  return CelestialBody::timeStep;
 }
 
 void CelestialBody::update(float dt)

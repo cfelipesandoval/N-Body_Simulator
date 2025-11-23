@@ -36,13 +36,35 @@ public:
   static float G; // Gravitational constant
   static int MAX_TRAIL_POINTS; // Size of trail vector to display
 
-  
-  static float timeStep; // Time step size
-  static int skipFrames; // Frames to skip before drawing to screen
-  static bool displayAllTrails; // Bool to display trails
-
-  
   // // Static Functions
+
+  /**
+   * @brief Set the Time step for simulation
+   * 
+   * @param dt Time step
+   */
+  static void setTimeStep(float dt);
+
+  /**
+   * @brief Set the how many frames to skip before drawing
+   * 
+   * @param frames Number of frames
+   */
+  static void setSkipFrames(int frames);
+
+  /**
+   * @brief Get the Time Step 
+   * 
+   * @return float Time step
+   */
+  static float getTimeStep();
+
+  /**
+   * @brief Get the number of frames skipped
+   * 
+   * @return int Frames skipped
+   */
+  static int getSkipFrames();
 
   /**
    * @brief Get Position of Center of Mass
@@ -105,27 +127,6 @@ public:
   static void update(float dt = timeStep);
 
   /**
-   * @brief Take a step using the Runge-Kutta Fourth Order Algorithm
-   * 
-   * @param dt Time step
-   */
-  static vector<vector<int>> RK4_step(float dt);
-
-  /**
-   * @brief Take a step using the Runge-Kutta Tenth Order Algorithm
-   * 
-   * @param dt Time step
-   */
-  static vector<vector<int>> RK10_step(float dt);
-
-  /**
-   * @brief Take a step using the Runge-Kutta Fourteenth Order Algorithm
-   * 
-   * @param dt Time step
-   */
-  static vector<vector<int>> RK14_step(float dt);
-
-  /**
    * @brief Set camera to follow a specific body
    * 
    * @param body Body index
@@ -144,7 +145,6 @@ public:
    * @param lightPos 
    */
   static void display(vec3 lightPos = vec3(0,0,0));
-
   
   // // Class Functions
   
@@ -160,7 +160,7 @@ public:
    * @param trailBufferArray Handle Array with {Shader, MVP, COLOR}
    * @param size Number of Vertices
    */
-  CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size);
+  CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray = CBShaderHandleArray, vector<GLuint*> bufferArray = CBBufferArray, vector<GLuint*> trailBufferArray = CBTrailBufferArray, int size = vertNum);
   
   /**
    * @brief Destroy the Celestial Body object
@@ -272,9 +272,32 @@ public:
 private:
   // // Static functions and variables
   static CelestialBody* followBody; // Pointer to body to follow
-  float isLightSource = 0.0; // is light source
   static CameraFollow follow; // follow body type
   static vector<vector<int>> (*orderPtr)(float); // Function pointer for which RK order to use
+  static float timeStep; // Time step size
+  static int skipFrames; // Frames to skip before drawing to screen
+  static bool displayAllTrails; // Bool to display trails
+
+  /**
+   * @brief Take a step using the Runge-Kutta Fourth Order Algorithm
+   * 
+   * @param dt Time step
+   */
+  static vector<vector<int>> RK4_step(float dt);
+
+  /**
+   * @brief Take a step using the Runge-Kutta Tenth Order Algorithm
+   * 
+   * @param dt Time step
+   */
+  static vector<vector<int>> RK10_step(float dt);
+
+  /**
+   * @brief Take a step using the Runge-Kutta Fourteenth Order Algorithm
+   * 
+   * @param dt Time step
+   */
+  static vector<vector<int>> RK14_step(float dt);
 
   /**
    * @brief Helper for RK4
@@ -330,6 +353,7 @@ private:
   float radius = 0.5; // Radius
   int numVertices = 0; // Number of vertices for drawing
   int bodyNum; // Number in list of existing bodies
+  float isLightSource = 0.0; // is light source
   
   
   // Trail Variables

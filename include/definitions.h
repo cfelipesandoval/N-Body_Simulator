@@ -28,7 +28,7 @@ static GLuint VertexArrayID;
 
 static vector<GLuint*> CBShaderHandleArray;
 static vector<GLuint*> CBBufferArray;
-static vector<GLuint*> trailBufferArray;
+static vector<GLuint*> CBTrailBufferArray;
 static int vertNum;
 
 static GLuint CelestialBodyID;
