@@ -85,20 +85,20 @@ You can include inside your loop the
 handleUserInput();
 ```
 Function which has the following inputs:
-W,A,S,D: Pan around center
-UP/DOWN_ARROW: Zoom in/out
-RIGHT/LEFT_ARROW: Increase/Decrease frames to skip
-B: Follow body with largest mass
-C: Follow Center of Mass
-N: Stop following body and center at (0,0,0)
-U: Follow next body
-Y: Follow previous body
-T: Toggle trail display
-P: Pause
+* W,A,S,D: Pan around center
+* UP/DOWN_ARROW: Zoom in/out
+* RIGHT/LEFT_ARROW: Increase/Decrease frames to skip
+* B: Follow body with largest mass
+* C: Follow Center of Mass
+* N: Stop following body and center at (0,0,0)
+* U: Follow next body
+* Y: Follow previous body
+* T: Toggle trail display
+* P: Pause
 
 You can also include the
 ```cpp
-handleSpawnRandom(num, maxRadius, maxVelocity, meanMass, stdMass);
+handleSpawnRandom(num, maxRadius, maxVelocity, meanMass, stdMass); // or handleSpawnRandom();
 ```
 Function, which spawns random bodies around the center when you press the Enter key
 
@@ -106,11 +106,10 @@ Function, which spawns random bodies around the center when you press the Enter 
 In the main() function in n_body_simulator.cpp you can see the following examples which you can comment in and out for predefined systems:
 
 ```cpp
-// // Predefined Body Initializations
-solarSystem();
-randomBodies(200);
-twoBody();
-fig8();
-orbitingFig8();
+solarSystem(); // Solar system with random bodies
+randomBodies(numBodies); // Random bodies
+twoBody(); // Two body system
+fig8(); // Figure 8 3-body system
+orbitingFig8(); // Figure 8 systems orbiting each other
 ```
 And you can see the way I set them up in their function definitions in definitions.cpp
