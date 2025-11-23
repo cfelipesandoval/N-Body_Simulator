@@ -1,13 +1,35 @@
+/*
+All Class function Definitions are in header file
+*/
+
+
 #include "CelestialBody.h"
 #include <include/controls.hpp>
 #include <iostream>
 
+#include <vector>
+#include <algorithm>
+#include <omp.h>
+#include <iostream>
+#include <chrono>
+#include <set>
+
+#include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+using namespace glm;
+using namespace std;
+
 vector<CelestialBody*> CelestialBody::bodies;
-int CelestialBody::follow = -2;
+CameraFollow CelestialBody::follow = COM;
+bool CelestialBody::displayAllTrails = true;
 vector<vector<int>> (*CelestialBody::orderPtr)(float);
+CelestialBody* CelestialBody::followBody;
+float CelestialBody::timeStep = 0.1;
+int CelestialBody::skipFrames = 5;
 
 float CelestialBody::G = 1;
-int CelestialBody::MAX_TRAIL_POINTS = 1000;
+int CelestialBody::MAX_TRAIL_POINTS = 100;
 
 CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CBShaderHandleArray, vector<GLuint*> CBBufferArray, vector<GLuint*> trailBufferArray, int size)
 : position(p), velocity(v), color(c), mass(m), numVertices(size)
@@ -24,8 +46,9 @@ CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CB
   MatrixIDCelestialBody = *CBShaderHandleArray[1];  
   ViewMatrixIDCelestialBody = *CBShaderHandleArray[2];  
   ModelMatrixIDCelestialBody = *CBShaderHandleArray[3];
-  colorIDCelestialBody = *CBShaderHandleArray[4];  
-  LightIDCelestialBody = *CBShaderHandleArray[5];
+  colorIDCelestialBody = *CBShaderHandleArray[4];
+  isLightSourceIDCelestialBody = *CBShaderHandleArray[5];
+  LightIDCelestialBody = *CBShaderHandleArray[6];
   
   vertexBufferCelestialBody = *CBBufferArray[0]; 
   uvBufferCelestialBody = *CBBufferArray[1]; 
@@ -39,6 +62,7 @@ CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> CB
   glGenBuffers(1, &trailingTailBufferData);
 
   orderPtr = &RK4_step;
+  displayTrail = displayAllTrails;
 }
 
 void CelestialBody::addPosition(vec3 pos)
@@ -108,6 +132,17 @@ void CelestialBody::setRadius(float r)
   radius = r;
 }
 
+void CelestialBody::setOrder(int order)
+{
+  switch(order)
+  {
+    case 4: orderPtr = &RK4_step; break;
+    case 10: orderPtr = &RK10_step; break;
+    case 14: orderPtr = &RK14_step; break;
+    default: cerr << "Error, Order must be 4, 10 or 14" << endl;
+  }
+}
+
 void CelestialBody::enableTrail()
 {
   displayTrail = true;
@@ -115,7 +150,7 @@ void CelestialBody::enableTrail()
 
 void CelestialBody::disableTrail()
 {
-  displayTrail = false;
+  displayTrail = false; 
 }
 
 void CelestialBody::enableAllTrails()
@@ -124,6 +159,7 @@ void CelestialBody::enableAllTrails()
   {
     el->displayTrail = true;
   }
+  CelestialBody::displayAllTrails = true;
 }
 
 void CelestialBody::disableAllTrails()
@@ -131,14 +167,75 @@ void CelestialBody::disableAllTrails()
   for(auto& el : CelestialBody::bodies)
   {
     el->displayTrail = false;
+    el->trailPoints.clear();
   }
+  CelestialBody::displayAllTrails = false;
 }
 
 void CelestialBody::cameraFollow(int body)
 {
-  if(body < CelestialBody::bodies.size() && body > -1) CelestialBody::follow = body;
-  else if(body == -1) CelestialBody::follow = -1;
-  else CelestialBody::follow = -2;
+  for(auto& el : CelestialBody::bodies)
+  {
+    el->isLightSource = 0;
+  }
+
+  if(body < CelestialBody::bodies.size() && body > -1) 
+  {
+    CelestialBody::follow = BODY;
+    
+    CelestialBody::followBody = CelestialBody::bodies[body];
+
+    CelestialBody::followBody->setAsLightSource();
+  }
+  else if(body == -1) CelestialBody::follow = COM;
+  else CelestialBody::follow = NONE;
+}
+
+vec3 CelestialBody::getBodyFollow()
+{
+  if(CelestialBody::follow == COM) return CelestialBody::getCOM();
+  else if(CelestialBody::follow == BODY || CelestialBody::follow == BIGGEST) return CelestialBody::followBody->getPosition();
+  else return vec3(0,0,0);
+}
+
+void CelestialBody::followBiggest()
+{
+  int b;
+  float m = 0;
+
+  for(auto& el : CelestialBody::bodies)
+  {
+    if(el->getMass() > m) 
+    {
+      m = el->getMass();
+      b = el->getBodyNum();
+    }
+  }
+  
+  CelestialBody::cameraFollow(b);
+  CelestialBody::follow = BIGGEST;
+}
+
+vec3 CelestialBody::getBiggestPos()
+{
+  int b;
+  float m = 0;
+
+  for(auto& el : CelestialBody::bodies)
+  {
+    if(el->getMass() > m) 
+    {
+      m = el->getMass();
+      b = el->getBodyNum();
+    }
+  }
+  CelestialBody::bodies[b]->setAsLightSource();
+  return CelestialBody::bodies[b]->getPosition();
+}
+
+void CelestialBody::followCOM()
+{
+  CelestialBody::cameraFollow(-1);
 }
 
 vec3 CelestialBody::getCOM()
@@ -157,7 +254,12 @@ vec3 CelestialBody::getCOM()
 
 void CelestialBody::cameraStopFollowing()
 {
-  CelestialBody::follow = -1;
+  CelestialBody::follow = NONE;
+}
+
+void CelestialBody::setAsLightSource()
+{
+  isLightSource = 1.0;
 }
 
 void CelestialBody::display(vec3 lightPos)
@@ -167,16 +269,15 @@ void CelestialBody::display(vec3 lightPos)
   mat4 ProjectionMatrix = getProjectionMatrix();
   mat4 ViewMatrix = getViewMatrix();
 
-  if(CelestialBody::follow > -1)
+  if(CelestialBody::follow == BIGGEST)
   {
-    ViewMatrix = translate(ViewMatrix, -(CelestialBody::bodies[CelestialBody::follow]->getPosition()));
-  }
-  else if(CelestialBody::follow == -1)
-  {
-    ViewMatrix = translate(ViewMatrix, -(CelestialBody::getCOM()));
-    lightPos = CelestialBody::getCOM() + vec3(0,25,0);
+    CelestialBody::followBiggest();
   }
 
+  // lightPos = CelestialBody::getBodyFollow();
+  lightPos = CelestialBody::getBiggestPos();
+  ViewMatrix = translate(ViewMatrix, -CelestialBody::getBodyFollow());
+  
   
   for(auto& el : CelestialBody::bodies)
   {
@@ -185,8 +286,9 @@ void CelestialBody::display(vec3 lightPos)
       el->~CelestialBody();
       continue;
     }
-
+    
     glUseProgram(el->CelestialBodyID);
+    glUniform1f(el->isLightSourceIDCelestialBody, el->isLightSource);
     // Update the uniforms
     glUniform3f(el->LightIDCelestialBody, lightPos.x, lightPos.y, lightPos.z);
     glUniformMatrix4fv(el->ViewMatrixIDCelestialBody, 1, GL_FALSE, &ViewMatrix[0][0]); // This one doesn't change between objects, so this can be done once for all objects that use "el->el->CelestialBodyID"
@@ -257,7 +359,7 @@ void CelestialBody::display(vec3 lightPos)
   }
 }
 
-// need to figure out how to get better precision for calculations
+
 vector<vector<int>> CelestialBody::RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads, vector<vec3> &KRcurr, vector<vec3> &KVcurr)
 {
   vector<vec3> possCurr(poss.size(), vec3(0, 0, 0));
@@ -662,27 +764,25 @@ vector<vector<int>> CelestialBody::RK4_step(float dt)
 
 void CelestialBody::update(float dt)
 {
-  vector<vector<int>> remove = (*CelestialBody::orderPtr)(dt);
-
-  if(remove.size())
+  for(int i = 0 ; i < CelestialBody::skipFrames ; i++)
   {
-    vector<vector<int>> rems;
-    for(auto& rem : remove)
+    vector<vector<int>> remove = (*CelestialBody::orderPtr)(dt);
+
+    if(remove.size())
     {
-      sort(rem.begin(), rem.end());
+      vector<vector<int>> rems;
+      for(auto& rem : remove)
+      {
+        sort(rem.begin(), rem.end());
+      }
+
+      sort(remove.begin(), remove.end());
+
+      remove.erase(std::unique(remove.begin(), remove.end()), remove.end());
+
+      combineBodies(remove);
     }
-
-    sort(remove.begin(), remove.end());
-
-    remove.erase(std::unique(remove.begin(), remove.end()), remove.end());
-
-    combineBodies(remove);
   }
-}
-
-void printVector(vec3 p)
-{
-  cout << p.x << ", " << p.y << ", " << p.z << ", " << endl;
 }
 
 void CelestialBody::combineBodies(vector<vector<int>> combine)
@@ -717,18 +817,6 @@ void CelestialBody::combineBodies(vector<vector<int>> combine)
     r->~CelestialBody();
   }
 }
-
-void CelestialBody::setOrder(int order)
-{
-  switch(order)
-  {
-    case 4: orderPtr = &RK4_step; break;
-    case 10: orderPtr = &RK10_step; break;
-    case 14: orderPtr = &RK14_step; break;
-    default: cerr << "Error, Order must be 4, 10 or 14" << endl;
-  }
-}
-
 
 CelestialBody::~CelestialBody()
 {

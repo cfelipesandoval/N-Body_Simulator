@@ -1,5 +1,7 @@
 #pragma once
 
+#include <include/definitions.h>
+
 #include <vector>
 #include <algorithm>
 #include <omp.h>
@@ -13,12 +15,94 @@
 using namespace glm;
 using namespace std;
 
-static float MAX_DISTANCE = 2000.0f;
+static float MAX_DISTANCE = 2000.0f; // Max distance of body before deleting
+
+/**
+ * @brief Enum for camera follow type
+ * 
+ */
+enum CameraFollow
+{
+  BODY = 1,
+  BIGGEST = 0,
+  COM = -1,
+  NONE = -2
+};
 
 class CelestialBody
 {
 public:
+  static vector<CelestialBody*> bodies; // Vector containing all active bodies
+  static float G; // Gravitational constant
+  static int MAX_TRAIL_POINTS; // Size of trail vector to display
+
+  
+  static float timeStep; // Time step size
+  static int skipFrames; // Frames to skip before drawing to screen
+  static bool displayAllTrails; // Bool to display trails
+
+  
   // // Static Functions
+
+  /**
+   * @brief Get Position of Center of Mass
+   * 
+   * @return vec3 position
+   */
+  static vec3 getCOM();
+  
+  /**
+   * @brief Get position of most massive body
+   * 
+   * @return vec3 position
+   */
+  static vec3 getBiggestPos();
+  
+
+  /**
+   * @brief Set the RK order
+   * 
+   * @param order 4, 10, or 14
+   */
+  static void setOrder(int order);
+  
+  /**
+   * @brief Get position of body currently being followed
+   * 
+   * @return vec3 position
+   */
+  static vec3 getBodyFollow();
+  
+  /**
+   * @brief Set camera to follow most massive body
+   * 
+   */
+  static void followBiggest();
+  
+  /**
+   * @brief Set camera to follow center of mass
+   * 
+   */
+  static void followCOM();
+  
+  /**
+   * @brief Enable display of trails
+   * 
+   */
+  static void enableAllTrails();
+  
+  /**
+   * @brief Disable display of trails
+   * 
+   */
+  static void disableAllTrails();
+  
+  /**
+   * @brief Update position of bodies
+   * 
+   * @param dt time step
+   */
+  static void update(float dt = timeStep);
 
   /**
    * @brief Take a step using the Runge-Kutta Fourth Order Algorithm
@@ -48,8 +132,6 @@ public:
    */
   static void cameraFollow(int body);
 
-  static vec3 getCOM();
-
   /**
    * @brief Disable camera following
    * 
@@ -63,10 +145,9 @@ public:
    */
   static void display(vec3 lightPos = vec3(0,0,0));
 
-  static vector<CelestialBody*> bodies; // Vector containing all active bodies
-  static float G; // Gravitational constant
-  static int MAX_TRAIL_POINTS; // Size of trail vector to display
-
+  
+  // // Class Functions
+  
   /**
    * @brief Construct a new Celestial Body object
    * 
@@ -182,37 +263,79 @@ public:
    */
   void setRadius(float r);
 
-  static void update(float dt);
-
-  static void setOrder(int order);
+  /**
+   * @brief Set body as light source
+   * 
+   */
+  void setAsLightSource();
 
 private:
+  // // Static functions and variables
+  static CelestialBody* followBody; // Pointer to body to follow
+  float isLightSource = 0.0; // is light source
+  static CameraFollow follow; // follow body type
+  static vector<vector<int>> (*orderPtr)(float); // Function pointer for which RK order to use
+
+  /**
+   * @brief Helper for RK4
+   * 
+   * @param poss Positions
+   * @param vels Velocities
+   * @param mass Masses
+   * @param rads Radii
+   * @param KRcurr K matrix for position
+   * @param KVcurr K matrix for velocity 
+   * @return vector<vector<int>> Vector of k values for RK algorithm
+   */
   static vector<vector<int>> RK4_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads,  vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  
+  /**
+   * @brief Helper for RK10
+   * 
+   * @param poss Positions
+   * @param vels Velocities
+   * @param mass Masses
+   * @param rads Radii
+   * @param KRcurr K matrix for position
+   * @param KVcurr K matrix for velocity 
+   * @return vector<vector<int>> Vector of k values for RK algorithm
+   */
   static vector<vector<int>> RK10_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads,  vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  
+  /**
+   * @brief Helper for RK14
+   * 
+   * @param poss Positions
+   * @param vels Velocities
+   * @param mass Masses
+   * @param rads Radii
+   * @param KRcurr K matrix for position
+   * @param KVcurr K matrix for velocity 
+   * @return vector<vector<int>> Vector of k values for RK algorithm
+   */
   static vector<vector<int>> RK14_helper(vector<vec3> &poss, vector<vec3> &vels, vector<float> &mass, vector<float> &rads,  vector<vec3> &KRcurr, vector<vec3> &KVcurr); // Put in private
+  
+  /**
+   * @brief Combine bodies if they touch
+   * 
+   * @param combine Vector of bodies to combine
+   */
   static void combineBodies(vector<vector<int>> combine);
-  // Variables for displaying
-  static int follow;
 
-  void enableTrail();
-  void disableTrail();
-
-  static void enableAllTrails();
-  static void disableAllTrails();
-
-  vec3 position = vec3(0,0,0);
-  vec3 velocity = vec3(0,0,0);
-  vec3 color = vec3(1,1,1);
-  float mass = 1;
-  float radius = 0.5;
-  int numVertices = 0;
-  int bodyNum;
-  static vector<vector<int>> (*orderPtr)(float);
+  // // Class variables and functions
+  vec3 position = vec3(0,0,0); // Position vector
+  vec3 velocity = vec3(0,0,0); // Velocity vector
+  vec3 color = vec3(1,1,1); // Color vector
+  float mass = 1; // Mass
+  float radius = 0.5; // Radius
+  int numVertices = 0; // Number of vertices for drawing
+  int bodyNum; // Number in list of existing bodies
+  
   
   // Trail Variables
-  bool displayTrail = true;
+  bool displayTrail = true; // Display trail bool
   vector<vec3> trailPoints; // Buffer for trail
-  GLuint trailingTailBufferData;
+  GLuint trailingTailBufferData; // Buffer containing trail for shader
   
   // Handles
   GLuint CelestialBodyID;
@@ -220,6 +343,7 @@ private:
   GLuint ViewMatrixIDCelestialBody;
   GLuint ModelMatrixIDCelestialBody;
   GLuint colorIDCelestialBody;
+  GLuint isLightSourceIDCelestialBody;
   GLuint LightIDCelestialBody;
   GLuint vertexBufferCelestialBody;
   GLuint uvBufferCelestialBody;
@@ -228,4 +352,16 @@ private:
   GLuint trailingTailID;
   GLuint MatrixIDTrailingTail;
   GLuint trailingTrailColorID;
+
+  /**
+   * @brief Enable the trail for body
+   * 
+   */
+  void enableTrail();
+
+  /**
+   * @brief Disable trail for body
+   * 
+   */
+  void disableTrail();
 };

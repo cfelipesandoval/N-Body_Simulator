@@ -1,21 +1,12 @@
-// Include GLFW
-#include <GLFW/glfw3.h>
-extern GLFWwindow* window; // The "extern" keyword here is to access the variable "window" declared in tutorialXXX.cpp. This is a hack to keep the tutorials simple. Please avoid this.
-
-// Include GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-using namespace glm;
-
 #include "controls.hpp"
 
-mat4 ViewMatrix;
-mat4 ProjectionMatrix;
 
-mat4 getViewMatrix(){
+mat4 getViewMatrix()
+{
 	return ViewMatrix;
 }
-mat4 getProjectionMatrix(){
+mat4 getProjectionMatrix()
+{
 	return ProjectionMatrix;
 }
 
@@ -41,12 +32,12 @@ void computeMatricesFromInputs()
 
 	// Move closer to the origin
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
-		radius -= 50 * speed * deltaTime;
+		radius -= 25 * speed * deltaTime;
 	}
 	// Move farther from the origin
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS)
 	{
-		radius += 50 * speed * deltaTime;
+		radius += 25 * speed * deltaTime;
 	}
 	// Rotate left
 	if (glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS)
