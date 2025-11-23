@@ -8,10 +8,14 @@
 
 GLFWwindow* window;
 
-int main(void)
+const int windowWidth = 1331;
+const int windowHeight = 998;
+
+int main(int argc, char ** argv)
 {
+  
   // Initialize Window and Shaders
-  if(initWindow()) return -1;
+  if(initWindow(windowWidth, windowHeight)) return -1;
 
   // Initialize Shaders
   if(initShaders()) return -1;
