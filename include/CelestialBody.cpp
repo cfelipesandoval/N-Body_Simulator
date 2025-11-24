@@ -31,13 +31,18 @@ int CelestialBody::skipFrames = 5;
 float CelestialBody::G = 1;
 int CelestialBody::MAX_TRAIL_POINTS = 100;
 
+
+CelestialBody* CelestialBody::newBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray, vector<GLuint*> bufferArray, vector<GLuint*> trailBufferArray, int size)
+{
+  return new CelestialBody(p,v,c,m,shaderHandleArray,bufferArray,trailBufferArray,size);
+}
+
+
 CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray, vector<GLuint*> bufferArray, vector<GLuint*> trailBufferArray, int size)
 : position(p), velocity(v), color(c), mass(m), numVertices(size)
 {
   // Set body number
   bodyNum = CelestialBody::bodies.size();
-
-  // Maybe add a conditional so you can make a static object like a light source?
 
   // Add to list containing all instances
   CelestialBody::bodies.push_back(this);

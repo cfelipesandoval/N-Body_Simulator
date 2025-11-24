@@ -229,7 +229,7 @@ void handleSpawnRandom(int bodies, float maxRad, float maxVel, float meanMass, f
     {
       float m = abs(gaussRand(meanMass, stdMass));
       vec3 pos = CelestialBody::getBodyFollow();
-      new CelestialBody(ballRand(maxRad) + pos, ballRand(maxVel), ballRand(1.0f), m);
+      CelestialBody::newBody(ballRand(maxRad) + pos, ballRand(maxVel), ballRand(1.0f), m);
       CelestialBody::bodies[CelestialBody::bodies.size() - 1]->setRadius(m * 0.2f);    
     }
   }
@@ -392,11 +392,13 @@ void solarSystem()
                         vec3(0.34509803921568627,0.7686274509803922,0.8666666666666667), vec3(0.9882352941176471,0.3843137254901961,0.3333333333333333), vec3(0.5450980392156862,0.27058823529411763,0.07450980392156863), 
                         vec3(0.803921568627451,0.5215686274509804,0.24705882352941178), vec3(0.611764705882353,0.8627450980392157,0.9215686274509803), vec3(0.10980392156862745,0.4588235294117647,0.5411764705882353)};
   
-  vector<float> rads = {0.05 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.0001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4};
-
+  // vector<float> rads = {0.05 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.0001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4};
+  vector<float> rads = {0.004654747, 1.63104E-05, 4.04551E-05, 4.26343E-05, 2.25672E-05, 0.000477895, 0.000402867, 0.000170851, 0.000164588, 1.16138E-05};
+  
   // Switch y and z coordinates
   for(int i = 0 ; i < positions.size() ; i++)
   {
+    cout << masses[i] << endl;
     positions[i] = vec3(positions[i].x, positions[i].z, positions[i].y);
   }
 
@@ -407,19 +409,21 @@ void solarSystem()
 
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
+    CelestialBody::newBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(rads[i]);
   }
+
+  // Earth's moon
   v = sqrt(G * M3 / (0.0026));
-  new CelestialBody(positions[3] + vec3(0.0026,0,0), velocities[3] + vec3(0,0,v), colors[3], 3.69e-8);
+  CelestialBody::newBody(positions[3] + vec3(0.0026,0,0), velocities[3] + vec3(0,0,v), colors[3], 3.69e-8);
   CelestialBody::bodies[masses.size()]->setRadius(0.0001);
 
-
+  // Spawn 15 Random Bodies
   for(int i = 0 ; i < 15 ; i++)
   {
     float m = abs(gaussRand(1e-9, 1e-10));
     vec3 pos = CelestialBody::getBodyFollow();
-    new CelestialBody(ballRand(5.0f) + pos, ballRand(3.0f), ballRand(1.0f), m);
+    CelestialBody::newBody(ballRand(5.0f) + pos, ballRand(3.0f), ballRand(1.0f), m);
     CelestialBody::bodies[CelestialBody::bodies.size() - 1]->setRadius(m * 0.2f);    
   }
 
@@ -434,12 +438,13 @@ void randomBodies(int numBodies)
 {
   CelestialBody::MAX_TRAIL_POINTS = 1000;
   CelestialBody::cameraFollow(-1);
-  CelestialBody::setTimeStep(0.01);
+  CelestialBody::setTimeStep(0.001);
+  
   // Spawn random bodies
   for(int i = 0 ; i < numBodies ; i++)
   {
-    float m = abs(gaussRand(2.0f, 1.0f));
-    new CelestialBody(ballRand(80.0f), ballRand(1.0f), ballRand(1.0f), m);
+    float m = abs(gaussRand(1e-1, 1e-1));
+    CelestialBody::newBody(ballRand(5.0f), ballRand(1.0f), ballRand(1.0f), m);
     
     CelestialBody::bodies[i]->setRadius(m * 0.2f);
   }
@@ -542,7 +547,7 @@ void orbitingFig8()
 
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
+    CelestialBody::newBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(0.125);
   }
 }
@@ -576,7 +581,7 @@ void fig8()
   // Initialize Bodies
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
+    CelestialBody::newBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(0.125);
   }
 }
@@ -628,7 +633,7 @@ void twoBody()
   // Initialize Bodies
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    new CelestialBody(positions[i], velocities[i], colors[i], masses[i]);
+    CelestialBody::newBody(positions[i], velocities[i], colors[i], masses[i]);
     CelestialBody::bodies[i]->setRadius(0.125);
   }
 }

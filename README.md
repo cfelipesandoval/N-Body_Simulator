@@ -44,7 +44,7 @@ if(initShaders()) return -1;
 ### Creating Instances
 Each body is created as an instance of the class CelestialBody, which can be initialized as
 ```cpp
-new CelestialBody(glm::vec3 pos, glm::vec3 vel, glm::vec3 color, float m);
+CelestialBody::newBody(glm::vec3 pos, glm::vec3 vel, glm::vec3 color, float m);
 ```
 Which automatically adds the body to the list of all bodies CelestialBody::bodies
 
@@ -59,7 +59,7 @@ vector<vec3> col = {col1, col2, ... , colN}; // Velocity Vectors
 
 for(int i = 0 ; i < masses.size() ; i++)
 {
-  new CelestialBody(pos[i], vel[i], col[i], M[i]);
+  CelestialBody::newBody(pos[i], vel[i], col[i], M[i]);
 }
 ```
 

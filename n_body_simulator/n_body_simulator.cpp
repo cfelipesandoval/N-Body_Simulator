@@ -11,6 +11,7 @@ GLFWwindow* window;
 const int windowWidth = 1024;
 const int windowHeight = 768;
 
+
 int main(int argc, char ** argv)
 {
   
@@ -23,8 +24,8 @@ int main(int argc, char ** argv)
   srand(time(0)); // Initialize random seed
 
   // // Predefined Body Initializations
-  solarSystem();
-  // randomBodies(200);
+  // solarSystem();
+  randomBodies(200);
   // twoBody();
   // fig8();
   // orbitingFig8();

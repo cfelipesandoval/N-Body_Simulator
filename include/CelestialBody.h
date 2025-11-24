@@ -8,6 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <set>
+#include <memory>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -37,6 +38,20 @@ public:
   static int MAX_TRAIL_POINTS; // Size of trail vector to display
 
   // // Static Functions
+
+  /**
+   * @brief Create new instance of a CelestialBody object
+   * 
+   * @param p Initial position
+   * @param v Initial velocity
+   * @param c color
+   * @param m mass
+   * @param CBShaderHandleArray Handle Array with {Shader, MVP, V, M, COLOR, Light_position} 
+   * @param CBBufferArray Buffer Array with {vertex, uv, normal, elements}
+   * @param trailBufferArray Handle Array with {Shader, MVP, COLOR}
+   * @param size Number of Vertices
+   */
+  static CelestialBody* newBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray = CBShaderHandleArray, vector<GLuint*> bufferArray = CBBufferArray, vector<GLuint*> trailBufferArray = CBTrailBufferArray, int size = vertNum);
 
   /**
    * @brief Set the Time step for simulation
@@ -147,20 +162,6 @@ public:
   static void display(vec3 lightPos = vec3(0,0,0));
   
   // // Class Functions
-  
-  /**
-   * @brief Construct a new Celestial Body object
-   * 
-   * @param p Initial position
-   * @param v Initial velocity
-   * @param c color
-   * @param m mass
-   * @param CBShaderHandleArray Handle Array with {Shader, MVP, V, M, COLOR, Light_position} 
-   * @param CBBufferArray Buffer Array with {vertex, uv, normal, elements}
-   * @param trailBufferArray Handle Array with {Shader, MVP, COLOR}
-   * @param size Number of Vertices
-   */
-  CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray = CBShaderHandleArray, vector<GLuint*> bufferArray = CBBufferArray, vector<GLuint*> trailBufferArray = CBTrailBufferArray, int size = vertNum);
   
   /**
    * @brief Destroy the Celestial Body object
@@ -377,6 +378,20 @@ private:
   GLuint MatrixIDTrailingTail;
   GLuint trailingTrailColorID;
 
+  /**
+   * @brief Construct a new Celestial Body object
+   * 
+   * @param p Initial position
+   * @param v Initial velocity
+   * @param c color
+   * @param m mass
+   * @param CBShaderHandleArray Handle Array with {Shader, MVP, V, M, COLOR, Light_position} 
+   * @param CBBufferArray Buffer Array with {vertex, uv, normal, elements}
+   * @param trailBufferArray Handle Array with {Shader, MVP, COLOR}
+   * @param size Number of Vertices
+   */
+  CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray = CBShaderHandleArray, vector<GLuint*> bufferArray = CBBufferArray, vector<GLuint*> trailBufferArray = CBTrailBufferArray, int size = vertNum);
+  
   /**
    * @brief Enable the trail for body
    * 
