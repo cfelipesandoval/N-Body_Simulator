@@ -1,5 +1,5 @@
 /*
-All Class function Definitions are in header file
+All Class commented function definitions are in header file
 */
 
 
@@ -25,18 +25,17 @@ CameraFollow CelestialBody::follow = COM;
 bool CelestialBody::displayAllTrails = true;
 vector<vector<int>> (*CelestialBody::orderPtr)(float);
 CelestialBody* CelestialBody::followBody;
+bool CelestialBody::lightFollowCamera = false;
 float CelestialBody::timeStep = 0.1;
 int CelestialBody::skipFrames = 5;
 
 float CelestialBody::G = 1;
 int CelestialBody::MAX_TRAIL_POINTS = 100;
 
-
 CelestialBody* CelestialBody::newBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray, vector<GLuint*> bufferArray, vector<GLuint*> trailBufferArray, int size)
 {
   return new CelestialBody(p,v,c,m,shaderHandleArray,bufferArray,trailBufferArray,size);
 }
-
 
 CelestialBody::CelestialBody(vec3 p, vec3 v, vec3 c, float m, vector<GLuint*> shaderHandleArray, vector<GLuint*> bufferArray, vector<GLuint*> trailBufferArray, int size)
 : position(p), velocity(v), color(c), mass(m), numVertices(size)
@@ -190,7 +189,7 @@ void CelestialBody::cameraFollow(int body)
     
     CelestialBody::followBody = CelestialBody::bodies[body];
 
-    CelestialBody::followBody->setAsLightSource();
+    if(CelestialBody::lightFollowCamera)CelestialBody::followBody->setAsLightSource();
   }
   else if(body == -1) CelestialBody::follow = COM;
   else CelestialBody::follow = NONE;
@@ -201,6 +200,19 @@ vec3 CelestialBody::getBodyFollow()
   if(CelestialBody::follow == COM) return CelestialBody::getCOM();
   else if(CelestialBody::follow == BODY || CelestialBody::follow == BIGGEST) return CelestialBody::followBody->getPosition();
   else return vec3(0,0,0);
+}
+
+vec3 CelestialBody::getBodyFollowVel()
+{
+  if(CelestialBody::follow == COM) return CelestialBody::getCOMVel();
+  else if(CelestialBody::follow == BODY || CelestialBody::follow == BIGGEST) return CelestialBody::followBody->getVelocity();
+  else return vec3(0,0,0);
+}
+
+float CelestialBody::getBodyFollowRad()
+{
+  if(CelestialBody::follow == BODY || CelestialBody::follow == BIGGEST) return CelestialBody::followBody->getRadius();
+  else return 0.01;
 }
 
 void CelestialBody::followBiggest()
@@ -219,6 +231,7 @@ void CelestialBody::followBiggest()
   
   CelestialBody::cameraFollow(b);
   CelestialBody::follow = BIGGEST;
+  CelestialBody::followBody->setAsLightSource();
 }
 
 vec3 CelestialBody::getBiggestPos()
@@ -257,6 +270,20 @@ vec3 CelestialBody::getCOM()
   return pos / m;
 }
 
+vec3 CelestialBody::getCOMVel()
+{
+  vec3 vel(0,0,0);
+  float m = 0;
+
+  for(auto& b : CelestialBody::bodies)
+  {
+    vel += b->getVelocity() * b->getMass();
+    m += b->getMass();
+  }
+
+  return vel / m;
+}
+
 void CelestialBody::cameraStopFollowing()
 {
   CelestialBody::follow = NONE;
@@ -267,23 +294,35 @@ void CelestialBody::setAsLightSource()
   isLightSource = 1.0;
 }
 
-void CelestialBody::display(vec3 lightPos)
+void CelestialBody::display()
 {
   // Clear the screen
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   // Compute the MVP matrix from keyboard and mouse input
-  computeMatricesFromInputs();
+  computeMatricesFromInputs(CelestialBody::getBodyFollowRad());
   mat4 ProjectionMatrix = getProjectionMatrix();
   mat4 ViewMatrix = getViewMatrix();
+
+  vec3 lightPos;
 
   if(CelestialBody::follow == BIGGEST)
   {
     CelestialBody::followBiggest();
+    lightPos = CelestialBody::getBiggestPos();
   }
+  else if(CelestialBody::follow == COM)
+  {
+    lightPos = CelestialBody::getCOM();
+  }
+  else if(CelestialBody::follow == BODY)
+  {
+    lightPos = CelestialBody::lightFollowCamera ? CelestialBody::getBodyFollow() : CelestialBody::getBiggestPos();
+  }
+  else lightPos = vec3(0,0,0);
 
   // lightPos = CelestialBody::getBodyFollow();
-  lightPos = CelestialBody::getBiggestPos();
+  // lightPos = CelestialBody::getBiggestPos();
   ViewMatrix = translate(ViewMatrix, -CelestialBody::getBodyFollow());
   
   

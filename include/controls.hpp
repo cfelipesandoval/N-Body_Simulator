@@ -13,7 +13,7 @@ using namespace glm;
 static mat4 ViewMatrix;
 static mat4 ProjectionMatrix;
 
-void computeMatricesFromInputs();
+void computeMatricesFromInputs(float maxRad = 0.1);
 glm::mat4 getViewMatrix();
 glm::mat4 getProjectionMatrix();
 

@@ -87,6 +87,13 @@ public:
    * @return vec3 position
    */
   static vec3 getCOM();
+
+  /**
+   * @brief Get velocity of Center of Mass
+   * 
+   * @return vec3 velocity
+   */
+  static vec3 getCOMVel();
   
   /**
    * @brief Get position of most massive body
@@ -94,7 +101,6 @@ public:
    * @return vec3 position
    */
   static vec3 getBiggestPos();
-  
 
   /**
    * @brief Set the RK order
@@ -109,7 +115,21 @@ public:
    * @return vec3 position
    */
   static vec3 getBodyFollow();
-  
+
+  /**
+   * @brief Get velocity of body currently being followed
+   * 
+   * @return vec3 velocity
+   */
+  static vec3 getBodyFollowVel();
+
+  /**
+   * @brief Get radius of body currently being followed
+   * 
+   * @return float radius
+   */
+  static float getBodyFollowRad();
+
   /**
    * @brief Set camera to follow most massive body
    * 
@@ -159,7 +179,7 @@ public:
    * 
    * @param lightPos 
    */
-  static void display(vec3 lightPos = vec3(0,0,0));
+  static void display();
   
   // // Class Functions
   
@@ -278,6 +298,7 @@ private:
   static float timeStep; // Time step size
   static int skipFrames; // Frames to skip before drawing to screen
   static bool displayAllTrails; // Bool to display trails
+  static bool lightFollowCamera;
 
   /**
    * @brief Take a step using the Runge-Kutta Fourth Order Algorithm

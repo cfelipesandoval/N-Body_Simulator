@@ -1,5 +1,5 @@
 #include "controls.hpp"
-
+#include <iostream>
 
 mat4 getViewMatrix()
 {
@@ -10,7 +10,7 @@ mat4 getProjectionMatrix()
 	return ProjectionMatrix;
 }
 
-void computeMatricesFromInputs()
+void computeMatricesFromInputs(float maxRad)
 {
 	static float initialFoV = 45.0f;
 
@@ -32,12 +32,12 @@ void computeMatricesFromInputs()
 
 	// Move closer to the origin
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
-		radius -= 25 * speed * deltaTime;
+		radius -= 4 * speed * deltaTime;
 	}
 	// Move farther from the origin
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS)
 	{
-		radius += 25 * speed * deltaTime;
+		radius += 4 * speed * deltaTime;
 	}
 	// Rotate left
 	if (glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS)
@@ -63,7 +63,7 @@ void computeMatricesFromInputs()
 	float x,y,z;
 
 	// Make sure camera does not go over theta limits (-90, 90)
-	if(radius < 0.15)radius = 0.15;
+	if(radius < maxRad * 50)radius = maxRad * 50;
 	if(theta > radians(90.0)) theta = radians(89.9);
 	if(theta < radians(-90.0)) theta = radians(-89.9);
 
@@ -77,7 +77,7 @@ void computeMatricesFromInputs()
 	float FoV = initialFoV;
 
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	ProjectionMatrix = perspective(radians(FoV), 4.0f / 3.0f, 0.1f, 10000.0f);
+	ProjectionMatrix = perspective(radians(FoV), 4.0f / 3.0f, 0.0001f, 10000.0f);
 	
 	// Camera matrix
 	ViewMatrix = lookAt(position, vec3(0,0,0), vec3(0,1,0));

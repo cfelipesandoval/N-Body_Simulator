@@ -87,8 +87,9 @@ int initWindow(int width, int height)
 
   // Dark blue background
   // glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
-   // Blacl Background
-   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  // Black Background
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
   // Enable depth test
   glEnable(GL_DEPTH_TEST);
@@ -225,11 +226,14 @@ void handleSpawnRandom(int bodies, float maxRad, float maxVel, float meanMass, f
   // Spawn random bodies
   if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
   {
+    vec3 v = CelestialBody::getBodyFollowVel();
+    
     for(int i = 0 ; i < bodies ; i++)
     {
       float m = abs(gaussRand(meanMass, stdMass));
       vec3 pos = CelestialBody::getBodyFollow();
-      CelestialBody::newBody(ballRand(maxRad) + pos, ballRand(maxVel), ballRand(1.0f), m);
+
+      CelestialBody::newBody(ballRand(maxRad) + pos, ballRand(maxVel) + v, ballRand(1.0f), m);
       CelestialBody::bodies[CelestialBody::bodies.size() - 1]->setRadius(m * 0.2f);    
     }
   }
@@ -246,6 +250,7 @@ void handleSpawnRandom(int bodies, float maxRad, float maxVel, float meanMass, f
  * T: Toggle trail display
  * RARROW: Increase frames to skip
  * LARROW: Decrease frames to skip
+ * V: Toggle background color
  * P: Pause
  * 
  */
@@ -296,6 +301,21 @@ void handleUserInput()
       CelestialBody::setSkipFrames(5);
     }
   }
+
+  // Change background color
+  if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) 
+  {
+    if(darkMode)
+    {
+      darkMode = false;
+      glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+      darkMode = true;
+      glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+  }
   
   // Pause (Don't update)
   if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) 
@@ -314,8 +334,6 @@ void handleUserInput()
 void solarSystem()
 {
   CelestialBody::MAX_TRAIL_POINTS = 1000;
-  follow = 0;
-  CelestialBody::cameraFollow(follow);
   CelestialBody::setTimeStep(0.00003);
 
   //// Initializing Initial Conditions
@@ -393,12 +411,11 @@ void solarSystem()
                         vec3(0.803921568627451,0.5215686274509804,0.24705882352941178), vec3(0.611764705882353,0.8627450980392157,0.9215686274509803), vec3(0.10980392156862745,0.4588235294117647,0.5411764705882353)};
   
   // vector<float> rads = {0.05 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.0001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4, 0.001 / 4};
-  vector<float> rads = {0.004654747, 1.63104E-05, 4.04551E-05, 4.26343E-05, 2.25672E-05, 0.000477895, 0.000402867, 0.000170851, 0.000164588, 1.16138E-05};
+  vector<float> rads = {0.004654747, 1.63104e-05, 4.04551e-05, 4.26343e-05, 2.25672e-05, 0.000477895, 0.000402867, 0.000170851, 0.000164588};
   
   // Switch y and z coordinates
   for(int i = 0 ; i < positions.size() ; i++)
   {
-    cout << masses[i] << endl;
     positions[i] = vec3(positions[i].x, positions[i].z, positions[i].y);
   }
 
@@ -409,24 +426,26 @@ void solarSystem()
 
   for(int i = 0 ; i < masses.size() ; i++)
   {
-    CelestialBody::newBody(positions[i], velocities[i], colors[i], masses[i]);
-    CelestialBody::bodies[i]->setRadius(rads[i]);
+    CelestialBody* body = CelestialBody::newBody(positions[i], velocities[i], colors[i], masses[i]);
+    body->setRadius(rads[i]);
   }
 
   // Earth's moon
   v = sqrt(G * M3 / (0.0026));
-  CelestialBody::newBody(positions[3] + vec3(0.0026,0,0), velocities[3] + vec3(0,0,v), colors[3], 3.69e-8);
-  CelestialBody::bodies[masses.size()]->setRadius(0.0001);
+  CelestialBody* body = CelestialBody::newBody(positions[3] + vec3(0.0026,0,0), velocities[3] + vec3(0,0,v), vec3(0.5,0.5,0.5), 3.69e-8);
+  body->setRadius(1.16138e-05);
 
   // Spawn 15 Random Bodies
-  for(int i = 0 ; i < 15 ; i++)
-  {
-    float m = abs(gaussRand(1e-9, 1e-10));
-    vec3 pos = CelestialBody::getBodyFollow();
-    CelestialBody::newBody(ballRand(5.0f) + pos, ballRand(3.0f), ballRand(1.0f), m);
-    CelestialBody::bodies[CelestialBody::bodies.size() - 1]->setRadius(m * 0.2f);    
-  }
+  // for(int i = 0 ; i < 15 ; i++)
+  // {
+  //   float m = abs(gaussRand(1e-9, 1e-10));
+  //   vec3 pos = CelestialBody::getBodyFollow();
+  //   CelestialBody* body = CelestialBody::newBody(ballRand(5.0f) + pos, ballRand(3.0f), ballRand(1.0f), m);
+  //   body->setRadius(m * 0.2f);
+  // }
 
+  follow = 0;
+  CelestialBody::cameraFollow(follow);
 }
 
 /**
@@ -439,15 +458,23 @@ void randomBodies(int numBodies)
   CelestialBody::MAX_TRAIL_POINTS = 1000;
   CelestialBody::cameraFollow(-1);
   CelestialBody::setTimeStep(0.001);
-  
+
+  float m = abs(gaussRand(5e-2, 1e-2));
+  float radMax = 3;
+  float vMax = 0.5;
+  float separation = 100;
+
   // Spawn random bodies
-  for(int i = 0 ; i < numBodies ; i++)
-  {
-    float m = abs(gaussRand(1e-1, 1e-1));
-    CelestialBody::newBody(ballRand(5.0f), ballRand(1.0f), ballRand(1.0f), m);
+  // for(int i = 0 ; i < 4 ; i++)
+  // {
+    vec3 initPos = ballRand(separation);
+    for(int j = 0 ; j < numBodies ; j++)
+    {
+      CelestialBody* body = CelestialBody::newBody(ballRand(radMax), ballRand(vMax), ballRand(1.0f), m);
+      body->setRadius(m * 0.2f);
+    }
     
-    CelestialBody::bodies[i]->setRadius(m * 0.2f);
-  }
+  // }
 }
 
 /**

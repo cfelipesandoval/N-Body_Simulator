@@ -59,7 +59,7 @@ vector<vec3> col = {col1, col2, ... , colN}; // Velocity Vectors
 
 for(int i = 0 ; i < masses.size() ; i++)
 {
-  CelestialBody::newBody(pos[i], vel[i], col[i], M[i]);
+  CelestialBody * body = CelestialBody::newBody(pos[i], vel[i], col[i], M[i]);
 }
 ```
 
@@ -110,6 +110,7 @@ Function which has the following inputs:
 * U: Follow next body
 * Y: Follow previous body
 * T: Toggle trail display
+* V: Toggle background color
 * P: Pause
 
 You can also include the

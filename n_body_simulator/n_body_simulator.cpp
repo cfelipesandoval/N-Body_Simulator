@@ -14,7 +14,6 @@ const int windowHeight = 768;
 
 int main(int argc, char ** argv)
 {
-  
   // Initialize Window and Shaders
   if(initWindow(windowWidth, windowHeight)) return -1;
 
@@ -25,11 +24,11 @@ int main(int argc, char ** argv)
 
   // // Predefined Body Initializations
   // solarSystem();
-  randomBodies(200);
+  randomBodies(300);
   // twoBody();
   // fig8();
   // orbitingFig8();
-
+  
   CelestialBody::setOrder(10);
   // CelestialBody::MAX_TRAIL_POINTS = 1000;
 
@@ -42,7 +41,7 @@ int main(int argc, char ** argv)
 
     // // Handle user input
     handleUserInput();
-    handleSpawnRandom(15, 5, 3, 1e-9, 1e-10); // Press Enter Key
+    handleSpawnRandom(15, 0.01, 1, 1e-9, 1e-10); // Press Enter Key
 
   } while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0); // Check if the ESC key was pressed or the window was closed
 

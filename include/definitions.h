@@ -49,6 +49,7 @@ static GLuint trailingTrailColorID;
 
 static bool showTrail = true;
 static int follow;
+static bool darkMode = true;
 
 int initWindow(int width = 1331, int height = 998);
 int initShaders();
